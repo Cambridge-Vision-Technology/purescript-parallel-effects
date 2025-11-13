@@ -1,0 +1,8 @@
+result
+.purs-repl
+.psci_modules
+.spago
+output
+node_modules
+.direnv
+.envrc

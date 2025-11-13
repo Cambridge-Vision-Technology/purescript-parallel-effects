@@ -1,0 +1,10 @@
+project:
+  name: "purescript-ae"
+  tags: ["general", "testing", "nix", "purescript"]
+  description: "Oz CLI"
+  header: |
+    PureScript AE
+    
+    An Algebraidc effect system (based on purescript-run) that combines the concepts of free monads and free applicatives to achieve a DSL where developers can have parts of their programs run in parallel.
+    ```
+  footer: |
