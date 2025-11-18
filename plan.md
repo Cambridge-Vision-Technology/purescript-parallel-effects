@@ -1,6 +1,6 @@
 # Parallel Effects – Delivery Plan
 
-Status: In progress
+Status: Complete ✅
 
 ## Done
 
@@ -27,33 +27,31 @@ Status: In progress
   - `parTraverse` and `parTraverse_` for mapping and executing in parallel.
   - New module: `src/Control/Monad/BatchRun/Parallel.purs`
   - Comprehensive test suite with 13 tests validating timing and correctness.
+- Implemented core library effects with typed error handling:
+  - **SafeAff**: Wraps Aff operations returning `Either Error a` for explicit error handling.
+  - **SafeEffect**: Wraps Effect operations returning `Either Error a` for explicit error handling.
+  - **Writer**: Monoidal value accumulation via `tell`.
+  - Core library now ships with: SafeAff, SafeEffect, Reader, State, Writer, Parallel.
+  - HTTP, FileSystem, and Logging moved to test/example code only.
+  - New modules: `src/Control/Monad/BatchRun/{SafeAff,SafeEffect,Writer}.purs`
+  - BDD test suite for safe effects with 6 scenarios validating error handling and parallel behavior.
+  - Test helpers in `test/Test/Support/SafeEffects.purs` for safe effect testing patterns.
+- Updated documentation:
+  - Fixed all `extract` → `runPure` references in COMPOSITION.md.
+  - Added error/cancellation semantics section to README.md.
+  - Added custom Applicative instance documentation to README.md.
+  - Added parallel helpers usage examples to README.md.
+  - Added Safe Effects section showing typed error handling patterns.
+  - Updated project structure to distinguish core vs example effects.
+- Added GitHub Actions CI pipeline:
+  - Multi-OS matrix (Ubuntu latest, macOS latest).
+  - Uses DeterminateSystems/determinate-nix-action for optimal Nix performance.
+  - Runs `nix flake check` to validate lint, format, build, and tests.
+- System support: Limited to macOS ARM (aarch64-darwin) and Linux x64 (x86_64-linux).
 
 ## Goals (next milestones)
 
-1) Document semantics (esp. error/cancellation), align README/COMPOSITION
-2) Add GitHub Actions CI pipeline to run checks on PRs
-
-## Work Items
-
-### 1) Semantics & docs
-
-- Define error/cancellation semantics
-  - Decision: Interpreter short-circuits batch on first `Aff` rejection and cancels siblings.
-  - Document trade-offs with guidance preference for typed errors; recommend using typed `Either` in effect functors, but allow interpreter to reflect actual `Aff` failures too.
-  - Files: `README.md`, `COMPOSITION.md` (update)
-  - Acceptance: Docs describe observed/tested behavior; code and tests align.
-
-- Align docs with current API
-  - Replace any `extract` references with `runPure`.
-  - Clarify that Applicative instance is custom to enable batching.
-  - Files: `README.md`, `COMPOSITION.md`
-  - Acceptance: No mismatches between docs and exports.
-
-### 2) Build & CI
-
-- CI: run full checks on PRs
-  - Action: Add GitHub Actions/CI pipeline to run `nix flake check`.
-  - Acceptance: CI fails on lint/format/build regressions; no network during builds; tests pass offline.
+None - all core goals completed!
 
 ## Conventions / Constraints
 
