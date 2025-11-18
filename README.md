@@ -57,6 +57,51 @@ main = launchAff_ do
   -- Results from all 3 requests, fetched concurrently!
 ```
 
+### Parallel Composition Helpers
+
+The `Control.Monad.BatchRun.Parallel` module provides convenient helpers for explicit parallel composition:
+
+```purescript
+import Control.Monad.BatchRun.Parallel
+
+-- Execute two computations in parallel, return both results
+userAndPost <- par2
+  (get "/users/1")
+  (get "/posts/1")
+-- Returns: Tuple user post
+
+-- Execute three computations in parallel
+results <- par3
+  (get "/users/1")
+  (get "/posts/1")
+  (get "/comments/1")
+-- Returns: Tuple user (Tuple post comment)
+
+-- Run an array of computations in parallel
+users <- gather
+  [ get "/users/1"
+  , get "/users/2"
+  , get "/users/3"
+  ]
+-- Returns: Array of results, preserving order
+
+-- Map over an array and execute in parallel (parallel traverse)
+users <- parTraverse
+  (\id -> get ("/users/" <> show id))
+  [1, 2, 3, 4, 5]
+-- Returns: Array of users
+
+-- Execute for side effects, discard results
+parTraverse_
+  (\url -> post url "data")
+  ["/log/1", "/log/2", "/log/3"]
+```
+
+**When to use:**
+- Use helpers when you want to make parallel intent explicit
+- Use raw applicative syntax (`<$>` and `<*>`) for flexible composition
+- Both approaches execute in parallel via the custom Applicative instance
+
 ## Implementation Highlights
 
 ### Parallel Interpreter
@@ -91,6 +136,108 @@ get :: forall r. String -> BatchRun (HTTP r) String
 get url = lift _http (Get url identity)
 ```
 
+### Error Handling & Cancellation
+
+When parallel batches execute, the interpreter uses Aff's cancellation mechanism to handle failures:
+
+- **First failure short-circuits**: If any effect in a parallel batch fails, the entire batch is canceled immediately
+- **Sibling cancellation**: Other effects running in the same batch are canceled automatically
+- **Fast failure propagation**: The failure is propagated without waiting for other effects to complete
+
+**Best practices:**
+- Use typed errors (Either/Maybe) in your effect functors for recoverable errors
+- Reserve Aff rejection for true failures (network errors, resource exhaustion)
+- This allows fine-grained error handling while preserving fast-failure semantics
+
+**Example:**
+```purescript
+-- If the first request fails after 10ms, the second is canceled immediately
+-- Total time: ~10ms, not 500ms
+results <- (\a b -> [a, b])
+  <$> get "/fail-fast"      -- Fails after 10ms
+  <*> get "/slow-endpoint"  -- Would take 500ms, but gets canceled
+```
+
+See `test/features/parallel-cancellation.feature.md` for behavioral specification.
+
+### Safe Effects (Typed Error Handling)
+
+For recoverable errors, use **Safe Effects** that return `Either Error a` instead of throwing:
+
+```purescript
+import Control.Monad.BatchRun.SafeAff (liftSafeAff, SAFE_AFF)
+import Control.Monad.BatchRun.SafeEffect (liftSafeEffect, SAFE_EFFECT)
+
+-- Wrap an Aff that might throw
+result <- liftSafeAff (Affjax.get url)
+case result of
+  Right response -> -- handle success
+  Left error -> -- handle error, no cancellation
+
+-- Wrap an Effect that might throw
+value <- liftSafeEffect (readFile path)
+case value of
+  Right contents -> pure contents
+  Left err -> pure "default contents"
+```
+
+**Key difference from Aff rejection:**
+
+| Behavior | Aff Rejection (throw) | Safe Effects (Either) |
+|----------|----------------------|----------------------|
+| Parallel batch | Cancels siblings immediately | All complete, return Either results |
+| Error handling | Must catch at interpreter | Explicit in return type |
+| Use case | Fatal failures | Recoverable errors |
+
+**Example: Mixed results without cancellation**
+
+```purescript
+-- Both operations complete, one succeeds and one fails
+results <- (\a b -> Tuple a b)
+  <$> liftSafeAff successfulOp  -- Returns Right value
+  <*> liftSafeAff failingOp      -- Returns Left error
+
+-- Both results are available:
+-- results :: Tuple (Either Error A) (Either Error B)
+```
+
+This allows you to handle partial failures gracefully without canceling the entire batch.
+
+See `test/features/safe-effects.feature.md` for behavioral specification.
+
+### Custom Applicative Instance
+
+BatchRun has a **custom Apply/Applicative instance** that merges adjacent batches:
+
+```purescript
+instance applyBatchRun :: Apply (BatchRun r) where
+  apply = apBatch  -- Custom implementation that merges batches
+
+instance applicativeBatchRun :: Applicative (BatchRun r) where
+  pure a = BatchRun (pure a)
+```
+
+**Why this matters:**
+- Default Applicative would create separate batches for each `<*>`
+- Custom instance merges them into a single batch
+- Result: All effects composed with `<*>` execute in parallel in one batch
+
+**The difference:**
+```purescript
+-- With custom instance: ONE batch with 3 parallel effects
+results <- (\a b c -> [a, b, c])
+  <$> effect1
+  <*> effect2
+  <*> effect3
+
+-- Sequential (monadic) composition: 3 separate batches
+results <- do
+  a <- effect1  -- Batch 1
+  b <- effect2  -- Batch 2
+  c <- effect3  -- Batch 3
+  pure [a, b, c]
+```
+
 ## Project Structure
 
 ```
@@ -98,13 +245,30 @@ src/
 ├── Control/
 │   └── Monad/
 │       ├── BatchRun.purs           # Core types and interpreter
+│       ├── Parallel.purs           # Parallel composition helpers
 │       └── BatchRun/
-│           ├── HTTP.purs            # HTTP effects
-│           ├── Reader.purs          # Reader effect
-│           └── State.purs           # State effect
+│           ├── SafeAff.purs        # Safe Aff with typed errors
+│           ├── SafeEffect.purs     # Safe Effect with typed errors
+│           ├── Reader.purs         # Reader effect
+│           ├── State.purs          # State effect
+│           ├── Writer.purs         # Writer effect
+│           ├── HTTP.purs           # HTTP effects (test/example)
+│           ├── FileSystem.purs     # FileSystem effects (test/example)
+│           └── Logging.purs        # Logging effects (test/example)
 ├── Demo.purs                        # Demo application
 └── Main.purs                        # Library entry point
 ```
+
+**Core Effects (shipped with library):**
+- **SafeAff** - Wrap Aff computations with typed error handling (`Either Error a`)
+- **SafeEffect** - Wrap Effect computations with typed error handling (`Either Error a`)
+- **Reader** - Read-only environment access
+- **State** - Mutable state management
+- **Writer** - Accumulate monoidal values
+- **Parallel** - Helper functions for explicit parallel composition (`par2`, `par3`, `gather`, `parTraverse`)
+
+**Example Effects (for testing/demonstrations):**
+- HTTP, FileSystem, Logging - Demonstrate patterns but not part of core library
 
 ## Behavior Specs (BDD Markdown)
 
@@ -202,9 +366,7 @@ This is a **proof of concept** demonstrating the core architecture. Production u
 
 1. **Effect Composition** - Better support for composing multiple effect interpreters
 2. **Performance** - Optimize O(n²) free applicative operations
-3. **Error Handling** - Robust error propagation through parallel batches
-4. **MonadEffect/MonadAff** - Proper lifting of base effects
-5. **Testing** - Comprehensive test suite with actual parallel execution verification
+3. **MonadEffect/MonadAff** - Proper lifting of base effects
 
 ## Key Learnings
 

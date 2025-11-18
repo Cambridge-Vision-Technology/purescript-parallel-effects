@@ -4,12 +4,15 @@ import Prelude
 
 import Control.Monad.BatchRun as Control.Monad.BatchRun
 import Control.Monad.BatchRun.Reader as Control.Monad.BatchRun.Reader
+import Control.Monad.BatchRun.SafeAff as Control.Monad.BatchRun.SafeAff
+import Control.Monad.BatchRun.SafeEffect as Control.Monad.BatchRun.SafeEffect
 import Control.Monad.BatchRun.State as Control.Monad.BatchRun.State
 import Data.Tuple as Data.Tuple
 import Data.DateTime.Instant as Data.DateTime.Instant
 import Data.Either as Data.Either
 import Data.Maybe as Data.Maybe
 import Data.Array as Data.Array
+import Data.Int as Data.Int
 import Data.Number as Data.Number
 import Data.String as Data.String
 import Data.Time.Duration as Data.Time.Duration
@@ -42,6 +45,10 @@ main = do
     Data.Maybe.Just "applicative-laws" -> do
       case Data.Array.index args 3 of
         Data.Maybe.Just which -> runApplicativeLaw which
+        _ -> usage
+    Data.Maybe.Just "safe-effects" -> do
+      case Data.Array.index args 3 of
+        Data.Maybe.Just subCmd -> runSafeEffects subCmd (Data.Array.drop 4 args)
         _ -> usage
     _ -> do
       usage
@@ -80,6 +87,106 @@ runStateParallelModify = Effect.Aff.launchAff_ do
   result <- Control.Monad.BatchRun.State.runState 0 Control.Monad.BatchRun.impossibleVariant program
   case result of
     Data.Tuple.Tuple _ final -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"finalState\":" <> show final <> "}"
+
+runSafeEffects :: String -> Array String -> Effect.Effect Unit
+runSafeEffects subCmd args = Effect.Aff.launchAff_ do
+  case subCmd of
+    "liftSafeAff-success" -> do
+      case Data.Array.index args 0 of
+        Data.Maybe.Just value -> do
+          let program = Control.Monad.BatchRun.SafeAff.liftSafeAff (pure value)
+          result <- Control.Monad.BatchRun.SafeAff.runSafeAff program
+          case result of
+            Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right " <> sanitize v <> "\"}"
+            Data.Either.Left err -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize (Effect.Exception.message err) <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing value\"}"
+
+    "liftSafeAff-failure" -> do
+      case Data.Array.index args 0 of
+        Data.Maybe.Just msg -> do
+          let program = Control.Monad.BatchRun.SafeAff.liftSafeAff (Effect.Aff.throwError (Effect.Exception.error msg)) :: Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeAff.SAFE_AFF ()) (Data.Either.Either Effect.Exception.Error Unit)
+          result <- Control.Monad.BatchRun.SafeAff.runSafeAff program
+          case result of
+            Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right " <> show v <> "\"}"
+            Data.Either.Left err -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize (Effect.Exception.message err) <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing msg\"}"
+
+    "liftSafeEffect-success" -> do
+      case Data.Array.index args 0 of
+        Data.Maybe.Just valueStr -> do
+          let value = Data.Maybe.fromMaybe 0 (map Data.Int.round (Data.Number.fromString valueStr))
+          let program = Control.Monad.BatchRun.SafeEffect.liftSafeEffect (pure value)
+          result <- Control.Monad.BatchRun.SafeEffect.runSafeEffect program
+          case result of
+            Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right " <> show v <> "\"}"
+            Data.Either.Left err -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize (Effect.Exception.message err) <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing value\"}"
+
+    "liftSafeEffect-failure" -> do
+      case Data.Array.index args 0 of
+        Data.Maybe.Just msg -> do
+          let program = Control.Monad.BatchRun.SafeEffect.liftSafeEffect (Effect.Exception.throwException (Effect.Exception.error msg)) :: Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeEffect.SAFE_EFFECT ()) (Data.Either.Either Effect.Exception.Error Unit)
+          result <- Control.Monad.BatchRun.SafeEffect.runSafeEffect program
+          case result of
+            Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right " <> show v <> "\"}"
+            Data.Either.Left err -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize (Effect.Exception.message err) <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing msg\"}"
+
+    "parallel-mixed" -> do
+      case Data.Tuple.Tuple (Data.Array.index args 0) (Data.Array.index args 1) of
+        Data.Tuple.Tuple (Data.Maybe.Just successValue) (Data.Maybe.Just failMsg) -> do
+          let
+            program = Data.Tuple.Tuple
+              <$> Control.Monad.BatchRun.SafeAff.liftSafeAff (pure successValue)
+              <*> Control.Monad.BatchRun.SafeAff.liftSafeAff (Effect.Aff.throwError (Effect.Exception.error failMsg))
+          result <- Control.Monad.BatchRun.SafeAff.runSafeAff program
+          case result of
+            Data.Tuple.Tuple first second -> do
+              let
+                firstStr = case first of
+                  Data.Either.Right v -> "Right " <> sanitize v
+                  Data.Either.Left _ -> "Left"
+              let
+                secondStr = case second of
+                  Data.Either.Right v -> "Right " <> sanitize v
+                  Data.Either.Left err -> "Left"
+              let
+                secondError = case second of
+                  Data.Either.Left err -> sanitize (Effect.Exception.message err)
+                  _ -> ""
+              Effect.Class.liftEffect $ Effect.Console.log $ "{\"first\":\"" <> firstStr <> "\",\"second\":\"" <> secondStr <> "\",\"secondError\":\"" <> secondError <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing args\"}"
+
+    "no-cancellation" -> do
+      case Data.Tuple.Tuple (Data.Array.index args 0) (Data.Tuple.Tuple (Data.Array.index args 1) (Data.Array.index args 2)) of
+        Data.Tuple.Tuple (Data.Maybe.Just msStr) (Data.Tuple.Tuple (Data.Maybe.Just successValue) (Data.Maybe.Just failMsg)) -> do
+          let ms = parseMs msStr
+          let
+            program = Data.Tuple.Tuple
+              <$> Control.Monad.BatchRun.SafeAff.liftSafeAff (Effect.Aff.delay ms *> pure successValue)
+              <*> Control.Monad.BatchRun.SafeAff.liftSafeAff (Effect.Aff.throwError (Effect.Exception.error failMsg))
+          start <- Effect.Class.liftEffect Effect.Now.now
+          result <- Control.Monad.BatchRun.SafeAff.runSafeAff program
+          end <- Effect.Class.liftEffect Effect.Now.now
+          let
+            Data.Time.Duration.Milliseconds a = Data.DateTime.Instant.unInstant start
+            Data.Time.Duration.Milliseconds b = Data.DateTime.Instant.unInstant end
+            elapsed = b - a
+          case result of
+            Data.Tuple.Tuple first second -> do
+              let hasRight = Data.Either.isRight first || Data.Either.isRight second
+              let hasLeft = Data.Either.isLeft first || Data.Either.isLeft second
+              Effect.Class.liftEffect $ Effect.Console.log $ "{\"elapsed\":" <> show elapsed <> ",\"hasRight\":" <> show hasRight <> ",\"hasLeft\":" <> show hasLeft <> ",\"first\":\"" <> (if Data.Either.isRight first then "Right " <> successValue else "Left") <> "\",\"second\":\"Left\",\"secondError\":\"" <> failMsg <> "\"}"
+        _ ->
+          Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"missing args\"}"
+
+    _ -> do
+      Effect.Class.liftEffect $ Effect.Console.log "{\"error\":\"unknown safe-effects subcommand\"}"
 
 parseMs :: String -> Data.Time.Duration.Milliseconds
 parseMs s = Data.Time.Duration.Milliseconds (Data.Maybe.fromMaybe 0.0 (Data.Number.fromString s))

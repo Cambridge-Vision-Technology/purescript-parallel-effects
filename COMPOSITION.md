@@ -85,7 +85,7 @@ program :: forall r. BatchRun (HTTP (STATE String r)) Int
 result = program
   # runState ""       -- Removes STATE, returns Aff (BatchRun (HTTP r) (Tuple String Int))
   >>= runHTTP         -- Removes HTTP, returns Aff (BatchRun r (Tuple String Int))
-  >>= extract         -- Requires r ~ (), returns Tuple String Int
+  >>= runPure         -- Requires r ~ (), returns Aff (Tuple String Int)
 ```
 
 ## Core Functions
@@ -124,13 +124,13 @@ send :: forall r a. VariantF r a -> BatchRun r a
 
 Lifts a VariantF back into BatchRun without handling it.
 
-### `extract` - Get the pure value
+### `runPure` - Execute computation with no effects
 
 ```purescript
-extract :: forall a. BatchRun () a -> a
+runPure :: forall a. BatchRun () a -> Aff a
 ```
 
-Only works when all effects have been handled (empty row).
+Executes a computation with an empty effect row, returning the result in Aff. Only works when all effects have been handled (empty row).
 
 ## Type-Level Magic
 

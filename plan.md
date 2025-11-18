@@ -8,59 +8,34 @@ Status: In progress
 - Implemented custom `Apply`/`Applicative` for `BatchRun` to merge batches.
 - All tests pass; parallelism validated by timing spec.
 - Lint (purescript-whine) and formatting (treefmt + purs‑tidy) wired via `flake.nix` and pass in `nix flake check`.
+- Integrated BDD specs into flake checks (`nix flake check` now includes BDD tests).
+- Comprehensive test coverage via BDD feature specs:
+  - Parallel cancellation/propagation (siblings cancel when one batch fails quickly).
+  - Reader semantics under batching (consistent env access in `<*>`).
+  - State semantics under batching (parallel modifications increment correctly).
+  - FileSystem operations (offline/deterministic write/read/delete tests).
+  - Applicative law sanity checks (identity, homomorphism, interchange, batch associativity).
+- Hardened BDD infrastructure:
+  - Fixed PureScript lint in BDD runner (matching aliases, consistent case branches).
+  - Centralized and corrected JS step definitions (delay/fail parsing, FS operations).
+  - Normalized feature files to avoid unresolved placeholders.
+  - Corrected BDD runner path in flake apps for direct bundle execution.
+- Tests run offline/deterministically via vendored bdd-markdown.
+- Added ergonomic parallel composition helpers:
+  - `par2` and `par3` for combining 2-3 computations with explicit parallel intent.
+  - `gather` for running an array of computations in parallel.
+  - `parTraverse` and `parTraverse_` for mapping and executing in parallel.
+  - New module: `src/Control/Monad/BatchRun/Parallel.purs`
+  - Comprehensive test suite with 13 tests validating timing and correctness.
 
 ## Goals (next milestones)
 
-1) Expand tests for behavior, not just structure
-2) Improve API ergonomics for common parallel patterns
-3) Document semantics (esp. error/cancellation), align README/COMPOSITION
-4) Tighten CI (ensure checks run on PRs; tests stay offline/deterministic)
+1) Document semantics (esp. error/cancellation), align README/COMPOSITION
+2) Add GitHub Actions CI pipeline to run checks on PRs
 
 ## Work Items
 
-### 1) Tests (expand coverage)
-
-- Parallel cancellation/propagation
-  - Intent: When one branch in a batch fails, the whole batch fails quickly (siblings canceled).
-  - Plan: Add test-only effect `FailF` with operation `failNow` whose handler rejects the Aff. Combine with a long `Delay` in `<*>` and assert total < 300ms and that the overall Aff fails.
-  - Files:
-    - `test/Test/Support/Fail.purs` (new)
-    - `test/Test/Parallelism.purs` (add new spec)
-  - Acceptance: Spec asserts failure and short total time; no flakiness.
-
-- Reader semantics under batching
-  - Intent: `ask` returns env consistently inside `<*>`.
-  - Plan: `(\a b -> a <> b) <$> ask <*> ask` with env = "X" → result "XX".
-  - Files: `test/Test/Reader.purs` (new)
-  - Acceptance: Passes; no timing assertions.
-
-- State semantics under batching
-  - Intent: Parallel `modify (_ + 1)` increments twice, final state = 2 (order nondeterministic but count stable).
-  - Plan: Use `runState 0` and `(\_ _ -> unit) <$> modify (_ + 1) <*> modify (_ + 1)`.
-  - Files: `test/Test/State.purs` (new)
-  - Acceptance: Final state == 2.
-
-- FileSystem (offline, deterministic)
-  - Intent: Verify write/read/delete and `fileExists` using `out/test/fs/...` as sandbox.
-  - Plan: Write a file, read back contents, delete, assert `fileExists == false`.
-  - Files: `test/Test/FileSystem.purs` (new)
-  - Acceptance: Passes without network; writes only under `out/test/fs/...`.
-
-- Applicative law sanity checks (lightweight)
-  - Intent: Smoke-check identity, homomorphism, interchange with small pure programs; associativity of batch merging.
-  - Files: Extend `test/Test/Control/Monad/BatchRun.purs`.
-  - Acceptance: All pass; serves as regression guard for the custom instance.
-
-### 2) API ergonomics
-
-- Add helpers for parallel composition
-  - `par2 :: BatchRun r a -> BatchRun r b -> BatchRun r (Tuple a b)`
-  - `par3`, `gather :: Array (BatchRun r a) -> BatchRun r (Array a)`
-  - `parTraverse :: (a -> BatchRun r b) -> Array a -> BatchRun r (Array b)`
-  - Files: `src/Control/Monad/BatchRun/Parallel.purs` (new)
-  - Acceptance: Unit tests that use these helpers to confirm parallel timing behaves as expected (reuse Delay effect).
-
-### 3) Semantics & docs
+### 1) Semantics & docs
 
 - Define error/cancellation semantics
   - Decision: Interpreter short-circuits batch on first `Aff` rejection and cancels siblings.
@@ -74,15 +49,11 @@ Status: In progress
   - Files: `README.md`, `COMPOSITION.md`
   - Acceptance: No mismatches between docs and exports.
 
-### 4) Build & CI
+### 2) Build & CI
 
 - CI: run full checks on PRs
   - Action: Add GitHub Actions/CI pipeline to run `nix flake check`.
   - Acceptance: CI fails on lint/format/build regressions; no network during builds; tests pass offline.
-
-- Optional: add test check to flake `checks`
-  - Action: Add `checks.test = ps.test.run { };` so tests are part of `nix flake check` (currently only build/lint/formatting are checks; tests are an app).
-  - Acceptance: `nix flake check` also runs tests.
 
 ## Conventions / Constraints
 
@@ -95,6 +66,7 @@ Status: In progress
 
 - Format: `nix run .#format-fix`
 - Lint: `nix build .#lint` or `nix flake check`
-- Tests: `nix run .#test`
-- All checks: `nix flake check`
+- PureScript tests: `nix run .#test`
+- BDD tests (playback): `nix run .#test-playback` (or specific feature: `nix run .#test-playback -- test/features/parallel-cancellation.feature.md`)
+- All checks (lint, format, build, PS tests, BDD specs): `nix flake check`
 

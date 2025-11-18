@@ -2,49 +2,140 @@
   [
     "Control.Monad.BatchRun Applicative batching allows applicative composition",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "Control.Monad.BatchRun LOGGING effect handles logging effects",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "Control.Monad.BatchRun runPure returns pure values with empty effect row",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel gather preserves order of results",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel gather runs a single computation",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel gather runs an empty array",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel gather runs multiple computations in parallel",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel par2 returns both results in a Tuple",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel par2 runs two computations in parallel",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel par3 returns all three results in nested Tuples",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel par3 runs three computations in parallel",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel parTraverse maps and executes in parallel",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel parTraverse maps empty array",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel parTraverse preserves order and transforms values",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel parTraverse_ executes effects in parallel and discards results",
+    {
+      "timestamp": "1763482362518.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun.Parallel parTraverse_ returns unit",
+    {
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "DemoComposed composedProgram type composes HTTP and LOGGING effects",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "DemoComposed parallel HTTP requests executes multiple HTTP requests with applicative",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "Parallelism timing applicative delays should run in parallel with <*>",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ],
   [
     "Parallelism timing sequential delays add up with do",
     {
-      "timestamp": "1763462379615.0",
+      "timestamp": "1763482362518.0",
       "success": true
     }
   ]

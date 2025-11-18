@@ -314,6 +314,212 @@ export const steps = [
       if (!out?.includes('"ok":true')) throw new Error('Batch merge check failed')
     },
   },
+
+  // Safe Effects
+  {
+    match: m(/^a successful Aff computation that returns "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a successful Aff computation that returns "([^"]+)"$/)
+      const value = m?.[1]
+      world.vars.set('safeAffValue', value)
+    },
+  },
+  {
+    match: m(/^I lift it with liftSafeAff$/),
+    run: async () => {
+      const value = world.vars.get('safeAffValue')
+      world.result = await runRunner(['safe-effects', 'liftSafeAff-success', value])
+    },
+  },
+  {
+    match: m(/^the result is Right "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the result is Right "([^"]+)"$/)
+      const expected = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes(`"result":"Right ${expected}"`)) throw new Error(`Expected Right "${expected}", got: ${line}`)
+    },
+  },
+  {
+    match: m(/^an Aff computation that throws error "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^an Aff computation that throws error "([^"]+)"$/)
+      const msg = m?.[1]
+      world.vars.set('safeAffError', msg)
+    },
+  },
+  {
+    match: m(/^the result is Left with error message containing "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the result is Left with error message containing "([^"]+)"$/)
+      const fragment = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes('"result":"Left"')) throw new Error(`Expected Left, got: ${line}`)
+      if (!line.includes(fragment)) throw new Error(`Expected error containing "${fragment}", got: ${line}`)
+    },
+  },
+  {
+    match: m(/^a successful Effect computation that returns (\d+)$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a successful Effect computation that returns (\d+)$/)
+      const value = m?.[1]
+      world.vars.set('safeEffectValue', Number(value))
+    },
+  },
+  {
+    match: m(/^I lift it with liftSafeEffect$/),
+    run: async () => {
+      const value = world.vars.get('safeEffectValue')
+      world.result = await runRunner(['safe-effects', 'liftSafeEffect-success', String(value)])
+    },
+  },
+  {
+    match: m(/^the result is Right (\d+)$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the result is Right (\d+)$/)
+      const expected = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes(`"result":"Right ${expected}"`)) throw new Error(`Expected Right ${expected}, got: ${line}`)
+    },
+  },
+  {
+    match: m(/^an Effect computation that throws error "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^an Effect computation that throws error "([^"]+)"$/)
+      const msg = m?.[1]
+      world.vars.set('safeEffectError', msg)
+    },
+  },
+  {
+    match: m(/^a safe Aff operation that succeeds with "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a safe Aff operation that succeeds with "([^"]+)"$/)
+      const value = m?.[1]
+      world.vars.set('safeAffSuccess', value)
+    },
+  },
+  {
+    match: m(/^a safe Aff operation that fails with "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a safe Aff operation that fails with "([^"]+)"$/)
+      const msg = m?.[1]
+      world.vars.set('safeAffFailure', msg)
+    },
+  },
+  {
+    match: m(/^I run both operations in parallel in a single batch$/),
+    run: async () => {
+      const success = world.vars.get('safeAffSuccess')
+      const failure = world.vars.get('safeAffFailure')
+      if (success && failure) {
+        world.start = Date.now()
+        world.result = await runRunner(['safe-effects', 'parallel-mixed', success, failure])
+        world.end = Date.now()
+      }
+    },
+  },
+  {
+    match: m(/^the first result is Right "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the first result is Right "([^"]+)"$/)
+      const expected = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes(`"first":"Right ${expected}"`)) throw new Error(`Expected first Right "${expected}", got: ${line}`)
+    },
+  },
+  {
+    match: m(/^the second result is Left with error message containing "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the second result is Left with error message containing "([^"]+)"$/)
+      const fragment = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes('"second":"Left"')) throw new Error(`Expected second Left, got: ${line}`)
+      if (!line.includes(fragment)) throw new Error(`Expected error containing "${fragment}", got: ${line}`)
+    },
+  },
+  {
+    match: m(/^both operations complete without cancellation$/),
+    run: async () => {
+      // Informational: both complete successfully with Either results
+    },
+  },
+  {
+    match: m(/^a delayed safe Aff that takes (\d+) milliseconds and succeeds with "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a delayed safe Aff that takes (\d+) milliseconds and succeeds with "([^"]+)"$/)
+      const ms = m?.[1]
+      const value = m?.[2]
+      world.vars.set('delayedSuccess', { ms: Number(ms), value })
+    },
+  },
+  {
+    match: m(/^a safe Aff that immediately fails with "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^a safe Aff that immediately fails with "([^"]+)"$/)
+      const msg = m?.[1]
+      world.vars.set('immediateFailure', msg)
+    },
+  },
+  {
+    match: m(/^both operations complete$/),
+    run: async () => {
+      const delayed = world.vars.get('delayedSuccess')
+      const failure = world.vars.get('immediateFailure')
+      if (delayed && failure) {
+        world.start = Date.now()
+        world.result = await runRunner(['safe-effects', 'no-cancellation', String(delayed.ms), delayed.value, failure])
+        world.end = Date.now()
+      }
+    },
+  },
+  {
+    match: m(/^the slow operation is not canceled$/),
+    run: async () => {
+      // Verified by timing assertion
+    },
+  },
+  {
+    match: m(/^the total elapsed time is at least (\d+) milliseconds$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^the total elapsed time is at least (\d+) milliseconds$/)
+      const ms = m && m[1]
+      const elapsed = world.result?.elapsed ?? world.end - world.start
+      if (!(elapsed >= Number(ms))) throw new Error(`Elapsed ${elapsed}ms not >= ${ms}ms`)
+    },
+  },
+  {
+    match: m(/^one result is Right "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^one result is Right "([^"]+)"$/)
+      const expected = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes(`Right ${expected}`)) throw new Error(`Expected a Right "${expected}", got: ${line}`)
+    },
+  },
+  {
+    match: m(/^one result is Left with error containing "([^"]+)"$/),
+    run: async ({ step: { title } }) => {
+      const m = title.match(/^one result is Left with error containing "([^"]+)"$/)
+      const fragment = m?.[1]
+      const { out } = world.result ?? {}
+      if (!out) throw new Error('No result output captured')
+      const line = out.trim()
+      if (!line.includes('"Left"')) throw new Error(`Expected a Left, got: ${line}`)
+      if (!line.includes(fragment)) throw new Error(`Expected error containing "${fragment}", got: ${line}`)
+    },
+  },
 ]
 
 // bdd-markdown expects a default export or named export; export both for safety
