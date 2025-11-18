@@ -1,0 +1,34 @@
+rulePackages:
+  - whine-core
+
+include:
+  - src/**/*.purs
+  - test/**/*.purs
+
+rules:
+  UndesirableFunctions:
+    functions:
+      # Partial functions - NEVER use, defeats type safety
+      "Partial.Unsafe.unsafePartial": "❌ NEVER use unsafePartial - use Either/Maybe types for error handling instead"
+
+      # Coercion - NEVER use, bypasses type system
+      "Unsafe.Coerce.unsafeCoerce": "❌ NEVER use unsafeCoerce - model types properly instead"
+
+      # Effect system bypasses - NEVER use, breaks referential transparency
+      "Effect.Unsafe.unsafePerformEffect": "❌ NEVER use unsafePerformEffect - return Effect type instead"
+      "Aff.Unsafe.unsafePerformAff": "❌ NEVER use unsafePerformAff - return Aff type instead"
+
+      # Array operations - NEVER use, can cause runtime crashes
+      "Data.Array.Unsafe.unsafeIndex": "❌ Use Data.Array.index which returns Maybe - handle Nothing case explicitly"
+
+      # Error handling - NEVER use, defeats type-safe error handling
+      "Effect.Exception.Unsafe.unsafeThrow": "❌ Use throwError or Either types for proper error handling"
+      "Partial.crashWith": "❌ NEVER use crashWith - use Either/Maybe types instead"
+
+      # Foreign types - NEVER use, bypasses entire type system
+      "Data.Foreign.Foreign": "❌ NEVER use Foreign type - model external data with proper PureScript types"
+
+  # Import standards enforcement
+  QualifiedImportsOnly: {}
+  MatchingAliases: {}
+  NoDuplicateImports: {}

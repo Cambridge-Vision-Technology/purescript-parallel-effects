@@ -12,20 +12,19 @@ module Control.Monad.BatchRun.Logging
   , runLoggingAt
   ) where
 
-import Prelude hiding (log)
+import Prelude
 
-import Control.Applicative.Free (FreeAp, foldFreeAp)
-import Control.Monad.BatchRun (BatchRun, BatchF(..), lift, send, peel, on, runParallel)
-import Control.Parallel (parallel, sequential)
-import Data.Either (Either(..))
-import Data.Functor.Variant as V
+import Control.Applicative.Free as Control.Applicative.Free
+import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Parallel as Control.Parallel
+import Data.Either as Data.Either
+import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol (class IsSymbol)
-import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Console as Console
-import Partial.Unsafe (unsafeCrashWith)
-import Prim.Row as Row
-import Type.Proxy (Proxy(..))
+import Effect.Aff as Effect.Aff
+import Effect.Class as Effect.Class
+import Effect.Console as Effect.Console
+import Prim.Row as Prim.Row
+import Type.Proxy as Type.Proxy
 
 -- | LOGGING effect row type
 -- | Example: BatchRun (LOGGING (FILE_SYSTEM r)) Unit
@@ -46,49 +45,46 @@ data LoggingF a = Log LogLevel String a
 
 derive instance Functor LoggingF
 
-_logging :: Proxy "logging"
-_logging = Proxy
+_logging :: Type.Proxy.Proxy "logging"
+_logging = Type.Proxy.Proxy
 
 -- | Generic log with level
-log :: forall r. LogLevel -> String -> BatchRun (LOGGING r) Unit
-log level msg = lift _logging (Log level msg unit)
+log :: forall r. LogLevel -> String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
+log level msg = Control.Monad.BatchRun.lift _logging (Log level msg unit)
 
 -- | Debug level log
-debug :: forall r. String -> BatchRun (LOGGING r) Unit
+debug :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
 debug = log Debug
 
 -- | Info level log
-info :: forall r. String -> BatchRun (LOGGING r) Unit
+info :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
 info = log Info
 
 -- | Warning level log
-warn :: forall r. String -> BatchRun (LOGGING r) Unit
+warn :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
 warn = log Warn
 
 -- | Error level log
-error :: forall r. String -> BatchRun (LOGGING r) Unit
+error :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
 error = log Error
 
-impossibleHandler :: forall r x. V.VariantF r x -> Aff x
-impossibleHandler _ = pure $ unsafeCrashWith "Impossible: all effects should be handled"
-
 -- | Handle LOGGING effects for programs with only LOGGING (no other effects)
-runLogging :: forall a. BatchRun (LOGGING ()) a -> Aff a
-runLogging = runLoggingAt _logging impossibleHandler
+runLogging :: forall a. Control.Monad.BatchRun.BatchRun (LOGGING ()) a -> Effect.Aff.Aff a
+runLogging = runLoggingAt _logging Control.Monad.BatchRun.impossibleVariant
 
 -- | Handle LOGGING effects at a specific label
 runLoggingAt
   :: forall sym q r a
    . IsSymbol sym
-  => Row.Cons sym LoggingF q r
-  => Proxy sym
-  -> (forall x. V.VariantF q x -> Aff x)
-  -> BatchRun r a
-  -> Aff a
+  => Prim.Row.Cons sym LoggingF q r
+  => Type.Proxy.Proxy sym
+  -> (forall x. Data.Functor.Variant.VariantF q x -> Effect.Aff.Aff x)
+  -> Control.Monad.BatchRun.BatchRun r a
+  -> Effect.Aff.Aff a
 runLoggingAt sym handler prog =
-  runParallel (\v -> on sym handleLogging handler v) prog
+  Control.Monad.BatchRun.runParallel (\v -> Control.Monad.BatchRun.on sym handleLogging handler v) prog
   where
-  handleLogging :: LoggingF ~> Aff
+  handleLogging :: LoggingF ~> Effect.Aff.Aff
   handleLogging (Log level msg next) = do
-    liftEffect $ Console.log $ "[" <> show level <> "] " <> msg
+    Effect.Class.liftEffect $ Effect.Console.log $ "[" <> show level <> "] " <> msg
     pure next

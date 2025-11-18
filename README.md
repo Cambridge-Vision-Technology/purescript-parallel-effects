@@ -106,6 +106,18 @@ src/
 └── Main.purs                        # Library entry point
 ```
 
+## Behavior Specs (BDD Markdown)
+
+Behavior-focused specifications are defined as Markdown features under `test/features/` and are intended to be executed by a BDD Markdown harness.
+
+- Parallel cancellation/propagation: `test/features/parallel-cancellation.feature.md`
+- Reader semantics under batching: `test/features/reader-semantics.feature.md`
+- State semantics under batching: `test/features/state-semantics.feature.md`
+- FileSystem sandboxed ops: `test/features/filesystem.feature.md`
+- Applicative law sanity checks: `test/features/applicative-laws.feature.md`
+
+These specs are offline/deterministic and write any artifacts under `out/test/...`.
+
 ## Building
 
 This project uses **purs-nix** for reproducible Nix-based builds:
@@ -120,6 +132,16 @@ nix build .#demo
 # Enter development shell
 nix develop
 ```
+
+## Tests
+
+This repo uses BDD Markdown feature files for behavior-focused tests (powered by @bifravst/bdd-markdown, packaged via Nix).
+
+- Run all checks (lint, format, build, unit tests, BDD specs):
+  - `nix flake check`
+- Run the BDD specs interactively:
+  - `nix run .#test-playback -- test/features/*.feature.md`
+  - The runner is compiled PureScript at `src/Test/BDD/Runner.purs` and is invoked by `test/bdd/steps.mjs`.
 
 ## Elegant Composition Pattern
 

@@ -10,21 +10,20 @@ module Control.Monad.BatchRun.HTTP
 
 import Prelude
 
-import Affjax.Node as Affjax
-import Affjax.RequestBody as RequestBody
-import Affjax.ResponseFormat as ResponseFormat
-import Control.Applicative.Free (FreeAp, foldFreeAp)
-import Control.Monad.BatchRun (BatchRun, BatchF(..), lift, send, peel, on)
-import Control.Parallel (parallel, sequential)
-import Data.Either (Either(..))
-import Data.Functor.Variant as V
-import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Affjax.Node as Affjax.Node
+import Affjax.RequestBody as Affjax.RequestBody
+import Affjax.ResponseFormat as Affjax.ResponseFormat
+import Control.Applicative.Free as Control.Applicative.Free
+import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Parallel as Control.Parallel
+import Data.Either as Data.Either
+import Data.Functor.Variant as Data.Functor.Variant
+import Data.HTTP.Method as Data.HTTP.Method
+import Data.Maybe as Data.Maybe
 import Data.Symbol (class IsSymbol)
-import Effect.Aff (Aff)
-import Partial.Unsafe (unsafeCrashWith)
-import Prim.Row as Row
-import Type.Proxy (Proxy(..))
+import Effect.Aff as Effect.Aff
+import Prim.Row as Prim.Row
+import Type.Proxy as Type.Proxy
 
 -- | HTTP effect row type - compose with other effects
 -- | Example: BatchRun (HTTP (STATE String r)) Unit
@@ -36,62 +35,42 @@ data HttpF a
 
 derive instance Functor HttpF
 
-_http :: Proxy "http"
-_http = Proxy
+_http :: Type.Proxy.Proxy "http"
+_http = Type.Proxy.Proxy
 
 -- | HTTP GET request
-get :: forall r. String -> BatchRun (HTTP r) String
-get url = lift _http (Get url identity)
+get :: forall r. String -> Control.Monad.BatchRun.BatchRun (HTTP r) String
+get url = Control.Monad.BatchRun.lift _http (Get url identity)
 
 -- | HTTP POST request
-post :: forall r. String -> String -> BatchRun (HTTP r) String
-post url body = lift _http (Post url body identity)
+post :: forall r. String -> String -> Control.Monad.BatchRun.BatchRun (HTTP r) String
+post url body = Control.Monad.BatchRun.lift _http (Post url body identity)
 
--- | Handle HTTP effects, removing them from the effect row
--- | Transforms: BatchRun (HTTP r) a -> BatchRun r a
-runHTTP :: forall r a. BatchRun (HTTP r) a -> Aff (BatchRun r a)
-runHTTP = runHTTPAt _http
+-- | Handle HTTP effects for programs with only HTTP (no other effects)
+runHTTP :: forall a. Control.Monad.BatchRun.BatchRun (HTTP ()) a -> Effect.Aff.Aff a
+runHTTP = runHTTPAt _http Control.Monad.BatchRun.impossibleVariant
 
 -- | Handle HTTP effects at a specific label
 runHTTPAt
   :: forall sym q r a
    . IsSymbol sym
-  => Row.Cons sym HttpF q r
-  => Proxy sym
-  -> BatchRun r a
-  -> Aff (BatchRun q a)
-runHTTPAt sym = loop
+  => Prim.Row.Cons sym HttpF q r
+  => Type.Proxy.Proxy sym
+  -> (forall x. Data.Functor.Variant.VariantF q x -> Effect.Aff.Aff x)
+  -> Control.Monad.BatchRun.BatchRun r a
+  -> Effect.Aff.Aff a
+runHTTPAt sym handler prog =
+  Control.Monad.BatchRun.runParallel (\v -> Control.Monad.BatchRun.on sym handleHTTP handler v) prog
   where
-  handle = on sym Left Right
-
-  loop :: BatchRun r a -> Aff (BatchRun q a)
-  loop br = case peel br of
-    Right a ->
-      pure $ pure a
-    Left (Batch ap) -> do
-      -- Interpret the batch in parallel, handling HTTP effects
-      batchResult <- sequential $ foldFreeAp interpretOne ap
-      loop batchResult
-
-  interpretOne :: forall x. V.VariantF r x -> Aff (BatchRun q x)
-  interpretOne v = case handle v of
-    Left httpEff -> do
-      -- This is our HTTP effect - handle it
-      result <- handleHTTP httpEff
-      pure $ pure result
-    Right otherEff ->
-      -- Different effect - pass it through
-      pure $ send otherEff
-
-  handleHTTP :: HttpF ~> Aff
+  handleHTTP :: HttpF ~> Effect.Aff.Aff
   handleHTTP (Get url cont) = do
-    result <- Affjax.get ResponseFormat.string url
+    result <- Affjax.Node.get Affjax.ResponseFormat.string url
     case result of
-      Left err -> pure $ cont $ "Error: " <> Affjax.printError err
-      Right response -> pure $ cont response.body
+      Data.Either.Left err -> pure $ cont $ "Error: " <> Affjax.Node.printError err
+      Data.Either.Right response -> pure $ cont response.body
 
   handleHTTP (Post url body cont) = do
-    result <- Affjax.post ResponseFormat.string url (Just $ RequestBody.string body)
+    result <- Affjax.Node.post Affjax.ResponseFormat.string url (Data.Maybe.Just $ Affjax.RequestBody.string body)
     case result of
-      Left err -> pure $ cont $ "Error: " <> Affjax.printError err
-      Right response -> pure $ cont response.body
+      Data.Either.Left err -> pure $ cont $ "Error: " <> Affjax.Node.printError err
+      Data.Either.Right response -> pure $ cont response.body

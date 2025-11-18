@@ -1,0 +1,13 @@
+{
+  "name": "bdd-tools",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@bifravst/bdd-markdown": "^8.0.0",
+    "@sinclair/typebox": "^0.34.41",
+    "chalk": "^5.6.2",
+    "jsonata": "^2.1.0",
+    "toposort": "^2.0.2",
+    "yaml": "^2.8.1"
+  }
+}

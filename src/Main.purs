@@ -2,8 +2,8 @@ module Main where
 
 import Prelude
 
-import Effect (Effect)
-import Effect.Console (log)
+import Effect as Effect
+import Effect.Console as Effect.Console
 
-main :: Effect Unit
-main = log "PureScript Parallel Effects Library - use 'nix run .#demo' to see the demo"
+main :: Effect.Effect Unit
+main = Effect.Console.log "PureScript Parallel Effects Library - use 'nix run .#demo' to see the demo"

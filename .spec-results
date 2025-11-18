@@ -1,0 +1,51 @@
+[
+  [
+    "Control.Monad.BatchRun Applicative batching allows applicative composition",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun LOGGING effect handles logging effects",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.BatchRun runPure returns pure values with empty effect row",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "DemoComposed composedProgram type composes HTTP and LOGGING effects",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "DemoComposed parallel HTTP requests executes multiple HTTP requests with applicative",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallelism timing applicative delays should run in parallel with <*>",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallelism timing sequential delays add up with do",
+    {
+      "timestamp": "1763462379615.0",
+      "success": true
+    }
+  ]
+]
