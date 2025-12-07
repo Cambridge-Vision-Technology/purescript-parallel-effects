@@ -8,3 +8,5 @@ node_modules
 .envrc
 out/
 result/
+AGENTS.md
+CLAUDE.md
