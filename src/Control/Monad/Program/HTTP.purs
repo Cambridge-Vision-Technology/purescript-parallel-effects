@@ -1,4 +1,4 @@
-module Control.Monad.BatchRun.HTTP
+module Control.Monad.Program.HTTP
   ( HttpF(..)
   , HTTP
   , _http
@@ -14,7 +14,7 @@ import Affjax.Node as Affjax.Node
 import Affjax.RequestBody as Affjax.RequestBody
 import Affjax.ResponseFormat as Affjax.ResponseFormat
 import Control.Applicative.Free as Control.Applicative.Free
-import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Monad.Program as Control.Monad.Program
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -26,7 +26,7 @@ import Prim.Row as Prim.Row
 import Type.Proxy as Type.Proxy
 
 -- | HTTP effect row type - compose with other effects
--- | Example: BatchRun (HTTP (STATE String r)) Unit
+-- | Example: Program (HTTP (STATE String r)) Unit
 type HTTP r = (http :: HttpF | r)
 
 data HttpF a
@@ -39,16 +39,16 @@ _http :: Type.Proxy.Proxy "http"
 _http = Type.Proxy.Proxy
 
 -- | HTTP GET request
-get :: forall r. String -> Control.Monad.BatchRun.BatchRun (HTTP r) String
-get url = Control.Monad.BatchRun.lift _http (Get url identity)
+get :: forall r. String -> Control.Monad.Program.Program (HTTP r) String
+get url = Control.Monad.Program.lift _http (Get url identity)
 
 -- | HTTP POST request
-post :: forall r. String -> String -> Control.Monad.BatchRun.BatchRun (HTTP r) String
-post url body = Control.Monad.BatchRun.lift _http (Post url body identity)
+post :: forall r. String -> String -> Control.Monad.Program.Program (HTTP r) String
+post url body = Control.Monad.Program.lift _http (Post url body identity)
 
 -- | Handle HTTP effects for programs with only HTTP (no other effects)
-runHTTP :: forall a. Control.Monad.BatchRun.BatchRun (HTTP ()) a -> Effect.Aff.Aff a
-runHTTP = runHTTPAt _http Control.Monad.BatchRun.impossibleVariant
+runHTTP :: forall a. Control.Monad.Program.Program (HTTP ()) a -> Effect.Aff.Aff a
+runHTTP = runHTTPAt _http Control.Monad.Program.impossibleVariant
 
 -- | Handle HTTP effects at a specific label
 runHTTPAt
@@ -57,10 +57,10 @@ runHTTPAt
   => Prim.Row.Cons sym HttpF q r
   => Type.Proxy.Proxy sym
   -> (forall x. Data.Functor.Variant.VariantF q x -> Effect.Aff.Aff x)
-  -> Control.Monad.BatchRun.BatchRun r a
+  -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runHTTPAt sym handler prog =
-  Control.Monad.BatchRun.runParallel (\v -> Control.Monad.BatchRun.on sym handleHTTP handler v) prog
+  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleHTTP handler v) prog
   where
   handleHTTP :: HttpF ~> Effect.Aff.Aff
   handleHTTP (Get url cont) = do

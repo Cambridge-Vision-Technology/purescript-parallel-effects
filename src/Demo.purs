@@ -2,8 +2,8 @@ module Demo where
 
 import Prelude
 
-import Control.Monad.BatchRun as Control.Monad.BatchRun
-import Control.Monad.BatchRun.HTTP as Control.Monad.BatchRun.HTTP
+import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.HTTP as Control.Monad.Program.HTTP
 import Data.Array as Data.Array
 import Data.DateTime.Instant as Data.DateTime.Instant
 import Data.Time.Duration as Data.Time.Duration
@@ -13,16 +13,16 @@ import Effect.Class as Effect.Class
 import Effect.Console as Effect.Console
 import Effect.Now as Effect.Now
 
-type AppEffects r = Control.Monad.BatchRun.HTTP.HTTP r
+type AppEffects r = Control.Monad.Program.HTTP.HTTP r
 
-demoProgram :: forall r. Control.Monad.BatchRun.BatchRun (AppEffects r) (Array String)
+demoProgram :: forall r. Control.Monad.Program.Program (AppEffects r) (Array String)
 demoProgram = do
   let baseUrl = "https://jsonplaceholder.typicode.com"
 
   let
-    user = Control.Monad.BatchRun.HTTP.get (baseUrl <> "/users/1")
-    posts = Control.Monad.BatchRun.HTTP.get (baseUrl <> "/posts/1")
-    comments = Control.Monad.BatchRun.HTTP.get (baseUrl <> "/comments/1")
+    user = Control.Monad.Program.HTTP.get (baseUrl <> "/users/1")
+    posts = Control.Monad.Program.HTTP.get (baseUrl <> "/posts/1")
+    comments = Control.Monad.Program.HTTP.get (baseUrl <> "/comments/1")
 
   results <- (\u p c -> [ u, p, c ]) <$> user <*> posts <*> comments
 
@@ -36,7 +36,7 @@ main = Effect.Aff.launchAff_ $ do
   Effect.Class.liftEffect $ Effect.Console.log ""
 
   startTime <- Effect.Class.liftEffect Effect.Now.now
-  results <- Control.Monad.BatchRun.HTTP.runHTTP demoProgram
+  results <- Control.Monad.Program.HTTP.runHTTP demoProgram
   endTime <- Effect.Class.liftEffect Effect.Now.now
 
   let

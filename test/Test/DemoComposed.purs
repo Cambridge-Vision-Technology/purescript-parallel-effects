@@ -2,9 +2,9 @@ module Test.DemoComposed where
 
 import Prelude
 
-import Control.Monad.BatchRun (BatchRun, on, runParallel, impossibleVariant)
-import Control.Monad.BatchRun.HTTP (HTTP, HttpF(..), _http, get)
-import Control.Monad.BatchRun.Logging (LOGGING, LoggingF(..), _logging, info, debug)
+import Control.Monad.Program (Program, on, runParallel, impossibleVariant)
+import Control.Monad.Program.HTTP (HTTP, HttpF(..), _http, get)
+import Control.Monad.Program.Logging (LOGGING, LoggingF(..), _logging, info, debug)
 import Data.Array as Array
 import Data.Functor.Variant as V
 import Data.String as String
@@ -45,7 +45,7 @@ spec = describe "DemoComposed" do
 
       -- Composed program using both effects
       let
-        program :: BatchRun (HTTP (LOGGING ())) String
+        program :: Program (HTTP (LOGGING ())) String
         program = do
           info "Starting test"
           debug "Making request"
@@ -93,7 +93,7 @@ spec = describe "DemoComposed" do
 
       -- Program with parallel requests
       let
-        program :: BatchRun (HTTP (LOGGING ())) String
+        program :: Program (HTTP (LOGGING ())) String
         program = do
           info "Starting parallel requests"
           results <- (\a b -> a <> " | " <> b)

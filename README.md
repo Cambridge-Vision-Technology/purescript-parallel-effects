@@ -18,7 +18,7 @@ This library demonstrates the Fraxl pattern (from Haskell) ported to PureScript,
 ```purescript
 data BatchF r a = Batch (FreeAp (VariantF r) a)
 
-newtype BatchRun r a = BatchRun (Free (BatchF r) a)
+newtype Program r a = Program (Free (BatchF r) a)
 ```
 
 This creates a three-layer architecture:
@@ -39,7 +39,7 @@ When effects are combined with applicative operators (`<*>`), they are batched t
 ## Example Usage
 
 ```purescript
-demoProgram :: forall r. BatchRun (HTTP r) (Array String)
+demoProgram :: forall r. Program (HTTP r) (Array String)
 demoProgram = do
   let baseUrl = "https://jsonplaceholder.typicode.com"
 
@@ -59,10 +59,10 @@ main = launchAff_ do
 
 ### Parallel Composition Helpers
 
-The `Control.Monad.BatchRun.Parallel` module provides convenient helpers for explicit parallel composition:
+The `Control.Monad.Program.Parallel` module provides convenient helpers for explicit parallel composition:
 
 ```purescript
-import Control.Monad.BatchRun.Parallel
+import Control.Monad.Program.Parallel
 
 -- Execute two computations in parallel, return both results
 userAndPost <- par2
@@ -110,9 +110,9 @@ parTraverse_
 runParallel
   :: forall r a
    . (forall x. VariantF r x -> Aff x)
-  -> BatchRun r a
+  -> Program r a
   -> Aff a
-runParallel handler (BatchRun free) =
+runParallel handler (Program free) =
   foldFree interpretBatch free
   where
   interpretBatch :: BatchF r ~> Aff
@@ -132,7 +132,7 @@ data HttpF a
 
 derive instance Functor HttpF
 
-get :: forall r. String -> BatchRun (HTTP r) String
+get :: forall r. String -> Program (HTTP r) String
 get url = lift _http (Get url identity)
 ```
 
@@ -165,8 +165,8 @@ See `test/features/parallel-cancellation.feature.md` for behavioral specificatio
 For recoverable errors, use **Safe Effects** that return `Either Error a` instead of throwing:
 
 ```purescript
-import Control.Monad.BatchRun.SafeAff (liftSafeAff, SAFE_AFF)
-import Control.Monad.BatchRun.SafeEffect (liftSafeEffect, SAFE_EFFECT)
+import Control.Monad.Program.SafeAff (liftSafeAff, SAFE_AFF)
+import Control.Monad.Program.SafeEffect (liftSafeEffect, SAFE_EFFECT)
 
 -- Wrap an Aff that might throw
 result <- liftSafeAff (Affjax.get url)
@@ -207,14 +207,14 @@ See `test/features/safe-effects.feature.md` for behavioral specification.
 
 ### Custom Applicative Instance
 
-BatchRun has a **custom Apply/Applicative instance** that merges adjacent batches:
+Program has a **custom Apply/Applicative instance** that merges adjacent batches:
 
 ```purescript
-instance applyBatchRun :: Apply (BatchRun r) where
+instance applyProgram :: Apply (Program r) where
   apply = apBatch  -- Custom implementation that merges batches
 
-instance applicativeBatchRun :: Applicative (BatchRun r) where
-  pure a = BatchRun (pure a)
+instance applicativeProgram :: Applicative (Program r) where
+  pure a = Program (pure a)
 ```
 
 **Why this matters:**
@@ -244,9 +244,9 @@ results <- do
 src/
 ├── Control/
 │   └── Monad/
-│       ├── BatchRun.purs           # Core types and interpreter
+│       ├── Program.purs           # Core types and interpreter
 │       ├── Parallel.purs           # Parallel composition helpers
-│       └── BatchRun/
+│       └── Program/
 │           ├── SafeAff.purs        # Safe Aff with typed errors
 │           ├── SafeEffect.purs     # Safe Effect with typed errors
 │           ├── Reader.purs         # Reader effect
@@ -316,7 +316,7 @@ Just like `purescript-run`, this library achieves elegant effect composition:
 type HTTP r = (http :: HttpF | r)
 
 -- Programs compose effects via row polymorphism
-demoProgram :: forall r. String -> BatchRun (HTTP r) (Array String)
+demoProgram :: forall r. String -> Program (HTTP r) (Array String)
 demoProgram baseUrl = do
   results <- (\u p c -> [u, p, c])
     <$> get (baseUrl <> "/users/1")
@@ -330,8 +330,8 @@ runHTTP
    . IsSymbol sym
   => Row.Cons sym HttpF q r  -- Key: r = (sym :: HttpF | q)
   => Proxy sym
-  -> BatchRun r a              -- Has HTTP effect
-  -> Aff (BatchRun q a)        -- HTTP removed!
+  -> Program r a              -- Has HTTP effect
+  -> Aff (Program q a)        -- HTTP removed!
 ```
 
 ### Key Type-Level Tricks

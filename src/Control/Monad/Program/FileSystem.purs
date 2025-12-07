@@ -1,4 +1,4 @@
-module Control.Monad.BatchRun.FileSystem
+module Control.Monad.Program.FileSystem
   ( FileSystemF(..)
   , FILE_SYSTEM
   , _filesystem
@@ -13,7 +13,7 @@ module Control.Monad.BatchRun.FileSystem
 import Prelude
 
 import Control.Applicative.Free as Control.Applicative.Free
-import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Monad.Program as Control.Monad.Program
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -25,7 +25,7 @@ import Prim.Row as Prim.Row
 import Type.Proxy as Type.Proxy
 
 -- | FILE_SYSTEM effect row type
--- | Example: BatchRun (FILE_SYSTEM (LOGGING r)) Unit
+-- | Example: Program (FILE_SYSTEM (LOGGING r)) Unit
 type FILE_SYSTEM r = (filesystem :: FileSystemF | r)
 
 data FileSystemF a
@@ -40,24 +40,24 @@ _filesystem :: Type.Proxy.Proxy "filesystem"
 _filesystem = Type.Proxy.Proxy
 
 -- | Read file contents
-readFile :: forall r. String -> Control.Monad.BatchRun.BatchRun (FILE_SYSTEM r) String
-readFile path = Control.Monad.BatchRun.lift _filesystem (ReadFile path identity)
+readFile :: forall r. String -> Control.Monad.Program.Program (FILE_SYSTEM r) String
+readFile path = Control.Monad.Program.lift _filesystem (ReadFile path identity)
 
 -- | Write file contents
-writeFile :: forall r. String -> String -> Control.Monad.BatchRun.BatchRun (FILE_SYSTEM r) Unit
-writeFile path contents = Control.Monad.BatchRun.lift _filesystem (WriteFile path contents identity)
+writeFile :: forall r. String -> String -> Control.Monad.Program.Program (FILE_SYSTEM r) Unit
+writeFile path contents = Control.Monad.Program.lift _filesystem (WriteFile path contents identity)
 
 -- | Delete a file
-deleteFile :: forall r. String -> Control.Monad.BatchRun.BatchRun (FILE_SYSTEM r) Unit
-deleteFile path = Control.Monad.BatchRun.lift _filesystem (DeleteFile path identity)
+deleteFile :: forall r. String -> Control.Monad.Program.Program (FILE_SYSTEM r) Unit
+deleteFile path = Control.Monad.Program.lift _filesystem (DeleteFile path identity)
 
 -- | Check if file exists
-fileExists :: forall r. String -> Control.Monad.BatchRun.BatchRun (FILE_SYSTEM r) Boolean
-fileExists path = Control.Monad.BatchRun.lift _filesystem (FileExists path identity)
+fileExists :: forall r. String -> Control.Monad.Program.Program (FILE_SYSTEM r) Boolean
+fileExists path = Control.Monad.Program.lift _filesystem (FileExists path identity)
 
 -- | Handle FILE_SYSTEM effects for programs with only FILE_SYSTEM (no other effects)
-runFileSystem :: forall a. Control.Monad.BatchRun.BatchRun (FILE_SYSTEM ()) a -> Effect.Aff.Aff a
-runFileSystem = runFileSystemAt _filesystem Control.Monad.BatchRun.impossibleVariant
+runFileSystem :: forall a. Control.Monad.Program.Program (FILE_SYSTEM ()) a -> Effect.Aff.Aff a
+runFileSystem = runFileSystemAt _filesystem Control.Monad.Program.impossibleVariant
 
 -- | Handle FILE_SYSTEM effects at a specific label
 runFileSystemAt
@@ -66,10 +66,10 @@ runFileSystemAt
   => Prim.Row.Cons sym FileSystemF q r
   => Type.Proxy.Proxy sym
   -> (forall x. Data.Functor.Variant.VariantF q x -> Effect.Aff.Aff x)
-  -> Control.Monad.BatchRun.BatchRun r a
+  -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runFileSystemAt sym handler prog =
-  Control.Monad.BatchRun.runParallel (\v -> Control.Monad.BatchRun.on sym handleFileSystem handler v) prog
+  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleFileSystem handler v) prog
   where
   handleFileSystem :: FileSystemF ~> Effect.Aff.Aff
   handleFileSystem (ReadFile path cont) = do

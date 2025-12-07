@@ -244,7 +244,7 @@
               program = "${pkgs.writeShellScript "run-demo" ''
                 ${pkgs.nodejs}/bin/node ${demoBundle}
               ''}";
-              meta.description = "Demo: parallel HTTP requests with BatchRun";
+              meta.description = "Demo: parallel HTTP requests with Program";
             };
 
           demo-composition =

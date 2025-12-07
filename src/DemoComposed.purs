@@ -5,9 +5,9 @@ import Prelude
 import Affjax.Node as Affjax.Node
 import Affjax.RequestBody as Affjax.RequestBody
 import Affjax.ResponseFormat as Affjax.ResponseFormat
-import Control.Monad.BatchRun as Control.Monad.BatchRun
-import Control.Monad.BatchRun.HTTP as Control.Monad.BatchRun.HTTP
-import Control.Monad.BatchRun.Logging as Control.Monad.BatchRun.Logging
+import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.HTTP as Control.Monad.Program.HTTP
+import Control.Monad.Program.Logging as Control.Monad.Program.Logging
 import Data.Array as Data.Array
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -21,20 +21,20 @@ import Type.Row (type (+))
 
 -- | This program composes HTTP and LOGGING effects together!
 -- | Notice how we use BOTH effects in the same program with the + operator
-composedProgram :: forall r. Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.HTTP.HTTP + Control.Monad.BatchRun.Logging.LOGGING + r) String
+composedProgram :: forall r. Control.Monad.Program.Program (Control.Monad.Program.HTTP.HTTP + Control.Monad.Program.Logging.LOGGING + r) String
 composedProgram = do
   -- LOGGING effect
-  Control.Monad.BatchRun.Logging.info "Starting composed program with HTTP and LOGGING"
-  Control.Monad.BatchRun.Logging.debug "About to make parallel HTTP requests"
+  Control.Monad.Program.Logging.info "Starting composed program with HTTP and LOGGING"
+  Control.Monad.Program.Logging.debug "About to make parallel HTTP requests"
 
   -- HTTP effects (run IN PARALLEL via <*>)
   results <- (\u p -> u <> "\n" <> p)
-    <$> Control.Monad.BatchRun.HTTP.get "https://jsonplaceholder.typicode.com/users/1"
-    <*> Control.Monad.BatchRun.HTTP.get "https://jsonplaceholder.typicode.com/posts/1"
+    <$> Control.Monad.Program.HTTP.get "https://jsonplaceholder.typicode.com/users/1"
+    <*> Control.Monad.Program.HTTP.get "https://jsonplaceholder.typicode.com/posts/1"
 
   -- LOGGING effect
-  Control.Monad.BatchRun.Logging.info $ "Successfully fetched " <> show (Data.String.length results) <> " characters"
-  Control.Monad.BatchRun.Logging.debug "Composed program complete"
+  Control.Monad.Program.Logging.info $ "Successfully fetched " <> show (Data.String.length results) <> " characters"
+  Control.Monad.Program.Logging.debug "Composed program complete"
 
   pure results
 
@@ -44,11 +44,11 @@ composedProgram = do
 -- |   2. Perform HTTP GET
 -- |   3. Log "Received: <url>"
 -- | These three steps always execute in order (sequentially) within each call.
-getWithLog :: forall r. String -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.HTTP.HTTP + Control.Monad.BatchRun.Logging.LOGGING + r) String
+getWithLog :: forall r. String -> Control.Monad.Program.Program (Control.Monad.Program.HTTP.HTTP + Control.Monad.Program.Logging.LOGGING + r) String
 getWithLog url = do
-  Control.Monad.BatchRun.Logging.info $ "Fetching: " <> url
-  result <- Control.Monad.BatchRun.HTTP.get url
-  Control.Monad.BatchRun.Logging.info $ "Received response from: " <> url
+  Control.Monad.Program.Logging.info $ "Fetching: " <> url
+  result <- Control.Monad.Program.HTTP.get url
+  Control.Monad.Program.Logging.info $ "Received response from: " <> url
   pure result
 
 -- | Demonstrates monadic sequences within applicative parallelism
@@ -64,9 +64,9 @@ getWithLog url = do
 -- |
 -- | Note: Logs from different threads may interleave non-deterministically,
 -- | but within each thread the order is guaranteed (Fetching → Received).
-parallelWithLogging :: forall r. Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.HTTP.HTTP + Control.Monad.BatchRun.Logging.LOGGING + r) String
+parallelWithLogging :: forall r. Control.Monad.Program.Program (Control.Monad.Program.HTTP.HTTP + Control.Monad.Program.Logging.LOGGING + r) String
 parallelWithLogging = do
-  Control.Monad.BatchRun.Logging.info "Starting parallel fetches with per-request logging"
+  Control.Monad.Program.Logging.info "Starting parallel fetches with per-request logging"
 
   -- Use applicative composition (<$> and <*>) to run getWithLog calls in parallel
   -- Each getWithLog is a complete monadic sequence that executes independently
@@ -74,29 +74,29 @@ parallelWithLogging = do
     <$> getWithLog "https://jsonplaceholder.typicode.com/users/1"
     <*> getWithLog "https://jsonplaceholder.typicode.com/posts/1"
 
-  Control.Monad.BatchRun.Logging.info "All fetches complete"
+  Control.Monad.Program.Logging.info "All fetches complete"
   pure results
 
 -- | Handler for LOGGING effects
-handleLogging :: Control.Monad.BatchRun.Logging.LoggingF ~> Effect.Aff.Aff
-handleLogging (Control.Monad.BatchRun.Logging.Log level msg next) = do
+handleLogging :: Control.Monad.Program.Logging.LoggingF ~> Effect.Aff.Aff
+handleLogging (Control.Monad.Program.Logging.Log level msg next) = do
   Effect.Class.liftEffect $ Effect.Console.log $ "[" <> show level <> "] " <> msg
   pure next
 
 -- | Compose handlers: HTTP handler that delegates to LOGGING handler
-handleBoth :: forall x. Data.Functor.Variant.VariantF (http :: Control.Monad.BatchRun.HTTP.HttpF, logging :: Control.Monad.BatchRun.Logging.LoggingF) x -> Effect.Aff.Aff x
+handleBoth :: forall x. Data.Functor.Variant.VariantF (http :: Control.Monad.Program.HTTP.HttpF, logging :: Control.Monad.Program.Logging.LoggingF) x -> Effect.Aff.Aff x
 handleBoth v =
-  Control.Monad.BatchRun.on Control.Monad.BatchRun.HTTP._http handleHttpEffect
-    (\v2 -> Control.Monad.BatchRun.on Control.Monad.BatchRun.Logging._logging handleLogging Control.Monad.BatchRun.impossibleVariant v2)
+  Control.Monad.Program.on Control.Monad.Program.HTTP._http handleHttpEffect
+    (\v2 -> Control.Monad.Program.on Control.Monad.Program.Logging._logging handleLogging Control.Monad.Program.impossibleVariant v2)
     v
   where
-  handleHttpEffect :: Control.Monad.BatchRun.HTTP.HttpF ~> Effect.Aff.Aff
-  handleHttpEffect (Control.Monad.BatchRun.HTTP.Get url cont) = do
+  handleHttpEffect :: Control.Monad.Program.HTTP.HttpF ~> Effect.Aff.Aff
+  handleHttpEffect (Control.Monad.Program.HTTP.Get url cont) = do
     result <- Affjax.Node.get Affjax.ResponseFormat.string url
     case result of
       Data.Either.Left err -> pure $ cont $ "Error: " <> Affjax.Node.printError err
       Data.Either.Right response -> pure $ cont response.body
-  handleHttpEffect (Control.Monad.BatchRun.HTTP.Post url body cont) = do
+  handleHttpEffect (Control.Monad.Program.HTTP.Post url body cont) = do
     result <- Affjax.Node.post Affjax.ResponseFormat.string url (Data.Maybe.Just $ Affjax.RequestBody.string body)
     case result of
       Data.Either.Left err -> pure $ cont $ "Error: " <> Affjax.Node.printError err
@@ -111,12 +111,12 @@ main = Effect.Aff.launchAff_ do
 
   -- Demo 1: Basic parallel HTTP with external logging
   Effect.Class.liftEffect $ Effect.Console.log "━━━ Demo 1: Basic Parallel HTTP ━━━"
-  Effect.Class.liftEffect $ Effect.Console.log "Type: BatchRun (HTTP + LOGGING + r) String"
+  Effect.Class.liftEffect $ Effect.Console.log "Type: Program (HTTP + LOGGING + r) String"
   Effect.Class.liftEffect $ Effect.Console.log "Pattern: Logging outside, HTTP calls in parallel"
   Effect.Class.liftEffect $ Effect.Console.log ""
 
   result1 <- Effect.Aff.try do
-    Control.Monad.BatchRun.runParallel handleBoth composedProgram
+    Control.Monad.Program.runParallel handleBoth composedProgram
 
   Effect.Class.liftEffect $ Effect.Console.log ""
   case result1 of
@@ -129,7 +129,7 @@ main = Effect.Aff.launchAff_ do
 
   -- Demo 2: Monadic sequences within applicative parallelism
   Effect.Class.liftEffect $ Effect.Console.log "━━━ Demo 2: Monadic Sequences in Parallel ━━━"
-  Effect.Class.liftEffect $ Effect.Console.log "Type: BatchRun (HTTP + LOGGING + r) String"
+  Effect.Class.liftEffect $ Effect.Console.log "Type: Program (HTTP + LOGGING + r) String"
   Effect.Class.liftEffect $ Effect.Console.log "Pattern: Each parallel branch is its own monadic sequence"
   Effect.Class.liftEffect $ Effect.Console.log ""
   Effect.Class.liftEffect $ Effect.Console.log "Key insight: getWithLog uses 'do' notation internally,"
@@ -142,7 +142,7 @@ main = Effect.Aff.launchAff_ do
   Effect.Class.liftEffect $ Effect.Console.log ""
 
   result2 <- Effect.Aff.try do
-    Control.Monad.BatchRun.runParallel handleBoth parallelWithLogging
+    Control.Monad.Program.runParallel handleBoth parallelWithLogging
 
   Effect.Class.liftEffect $ Effect.Console.log ""
   case result2 of

@@ -1,4 +1,4 @@
-module Control.Monad.BatchRun.Logging
+module Control.Monad.Program.Logging
   ( LoggingF(..)
   , LOGGING
   , LogLevel(..)
@@ -15,7 +15,7 @@ module Control.Monad.BatchRun.Logging
 import Prelude
 
 import Control.Applicative.Free as Control.Applicative.Free
-import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Monad.Program as Control.Monad.Program
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -27,7 +27,7 @@ import Prim.Row as Prim.Row
 import Type.Proxy as Type.Proxy
 
 -- | LOGGING effect row type
--- | Example: BatchRun (LOGGING (FILE_SYSTEM r)) Unit
+-- | Example: Program (LOGGING (FILE_SYSTEM r)) Unit
 type LOGGING r = (logging :: LoggingF | r)
 
 data LogLevel = Debug | Info | Warn | Error
@@ -49,28 +49,28 @@ _logging :: Type.Proxy.Proxy "logging"
 _logging = Type.Proxy.Proxy
 
 -- | Generic log with level
-log :: forall r. LogLevel -> String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
-log level msg = Control.Monad.BatchRun.lift _logging (Log level msg unit)
+log :: forall r. LogLevel -> String -> Control.Monad.Program.Program (LOGGING r) Unit
+log level msg = Control.Monad.Program.lift _logging (Log level msg unit)
 
 -- | Debug level log
-debug :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
+debug :: forall r. String -> Control.Monad.Program.Program (LOGGING r) Unit
 debug = log Debug
 
 -- | Info level log
-info :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
+info :: forall r. String -> Control.Monad.Program.Program (LOGGING r) Unit
 info = log Info
 
 -- | Warning level log
-warn :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
+warn :: forall r. String -> Control.Monad.Program.Program (LOGGING r) Unit
 warn = log Warn
 
 -- | Error level log
-error :: forall r. String -> Control.Monad.BatchRun.BatchRun (LOGGING r) Unit
+error :: forall r. String -> Control.Monad.Program.Program (LOGGING r) Unit
 error = log Error
 
 -- | Handle LOGGING effects for programs with only LOGGING (no other effects)
-runLogging :: forall a. Control.Monad.BatchRun.BatchRun (LOGGING ()) a -> Effect.Aff.Aff a
-runLogging = runLoggingAt _logging Control.Monad.BatchRun.impossibleVariant
+runLogging :: forall a. Control.Monad.Program.Program (LOGGING ()) a -> Effect.Aff.Aff a
+runLogging = runLoggingAt _logging Control.Monad.Program.impossibleVariant
 
 -- | Handle LOGGING effects at a specific label
 runLoggingAt
@@ -79,10 +79,10 @@ runLoggingAt
   => Prim.Row.Cons sym LoggingF q r
   => Type.Proxy.Proxy sym
   -> (forall x. Data.Functor.Variant.VariantF q x -> Effect.Aff.Aff x)
-  -> Control.Monad.BatchRun.BatchRun r a
+  -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runLoggingAt sym handler prog =
-  Control.Monad.BatchRun.runParallel (\v -> Control.Monad.BatchRun.on sym handleLogging handler v) prog
+  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleLogging handler v) prog
   where
   handleLogging :: LoggingF ~> Effect.Aff.Aff
   handleLogging (Log level msg next) = do

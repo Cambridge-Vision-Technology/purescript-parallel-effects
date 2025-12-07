@@ -1,9 +1,9 @@
-module Test.Control.Monad.BatchRun where
+module Test.Control.Monad.Program where
 
 import Prelude
 
-import Control.Monad.BatchRun (BatchRun, on, runParallel, impossibleVariant, runPure)
-import Control.Monad.BatchRun.Logging (LOGGING, LoggingF(..), _logging, info)
+import Control.Monad.Program (Program, on, runParallel, impossibleVariant, runPure)
+import Control.Monad.Program.Logging (LOGGING, LoggingF(..), _logging, info)
 import Data.Array as Array
 import Data.Functor.Variant as V
 import Data.String as String
@@ -14,12 +14,12 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 spec :: Spec Unit
-spec = describe "Control.Monad.BatchRun" do
+spec = describe "Control.Monad.Program" do
 
   describe "runPure" do
     it "returns pure values with empty effect row" do
       let
-        program :: BatchRun () Int
+        program :: Program () Int
         program = pure 42
 
       result <- runPure program
@@ -36,7 +36,7 @@ spec = describe "Control.Monad.BatchRun" do
           pure next
 
       let
-        program :: BatchRun (LOGGING ()) Unit
+        program :: Program (LOGGING ()) Unit
         program = do
           info "First message"
           info "Second message"
@@ -58,7 +58,7 @@ spec = describe "Control.Monad.BatchRun" do
           pure next
 
       let
-        program :: BatchRun (LOGGING ()) Unit
+        program :: Program (LOGGING ()) Unit
         program = info "A" *> info "B" *> info "C"
 
       _ <- runParallel (\v -> on _logging handleLogging impossibleVariant v) program

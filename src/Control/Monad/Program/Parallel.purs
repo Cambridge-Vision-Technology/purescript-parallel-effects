@@ -1,4 +1,4 @@
-module Control.Monad.BatchRun.Parallel
+module Control.Monad.Program.Parallel
   ( par2
   , par3
   , gather
@@ -8,7 +8,7 @@ module Control.Monad.BatchRun.Parallel
 
 import Prelude
 
-import Control.Monad.BatchRun as Control.Monad.BatchRun
+import Control.Monad.Program as Control.Monad.Program
 import Data.Array as Data.Array
 import Data.Tuple as Data.Tuple
 
@@ -24,9 +24,9 @@ import Data.Tuple as Data.Tuple
 -- | ```
 par2
   :: forall r a b
-   . Control.Monad.BatchRun.BatchRun r a
-  -> Control.Monad.BatchRun.BatchRun r b
-  -> Control.Monad.BatchRun.BatchRun r (Data.Tuple.Tuple a b)
+   . Control.Monad.Program.Program r a
+  -> Control.Monad.Program.Program r b
+  -> Control.Monad.Program.Program r (Data.Tuple.Tuple a b)
 par2 fa fb = Data.Tuple.Tuple <$> fa <*> fb
 
 -- | Execute three computations in parallel and return all results as a 3-Tuple.
@@ -38,10 +38,10 @@ par2 fa fb = Data.Tuple.Tuple <$> fa <*> fb
 -- | ```
 par3
   :: forall r a b c
-   . Control.Monad.BatchRun.BatchRun r a
-  -> Control.Monad.BatchRun.BatchRun r b
-  -> Control.Monad.BatchRun.BatchRun r c
-  -> Control.Monad.BatchRun.BatchRun r (Data.Tuple.Tuple a (Data.Tuple.Tuple b c))
+   . Control.Monad.Program.Program r a
+  -> Control.Monad.Program.Program r b
+  -> Control.Monad.Program.Program r c
+  -> Control.Monad.Program.Program r (Data.Tuple.Tuple a (Data.Tuple.Tuple b c))
 par3 fa fb fc = Data.Tuple.Tuple <$> fa <*> (Data.Tuple.Tuple <$> fb <*> fc)
 
 -- | Execute an array of computations in parallel and gather all results.
@@ -57,8 +57,8 @@ par3 fa fb fc = Data.Tuple.Tuple <$> fa <*> (Data.Tuple.Tuple <$> fb <*> fc)
 -- | ```
 gather
   :: forall r a
-   . Array (Control.Monad.BatchRun.BatchRun r a)
-  -> Control.Monad.BatchRun.BatchRun r (Array a)
+   . Array (Control.Monad.Program.Program r a)
+  -> Control.Monad.Program.Program r (Array a)
 gather = Data.Array.foldr cons nil
   where
   nil = pure []
@@ -77,9 +77,9 @@ gather = Data.Array.foldr cons nil
 -- | ```
 parTraverse
   :: forall r a b
-   . (a -> Control.Monad.BatchRun.BatchRun r b)
+   . (a -> Control.Monad.Program.Program r b)
   -> Array a
-  -> Control.Monad.BatchRun.BatchRun r (Array b)
+  -> Control.Monad.Program.Program r (Array b)
 parTraverse f arr = gather (map f arr)
 
 -- | Like `parTraverse` but discards the results.
@@ -93,7 +93,7 @@ parTraverse f arr = gather (map f arr)
 -- | ```
 parTraverse_
   :: forall r a b
-   . (a -> Control.Monad.BatchRun.BatchRun r b)
+   . (a -> Control.Monad.Program.Program r b)
   -> Array a
-  -> Control.Monad.BatchRun.BatchRun r Unit
+  -> Control.Monad.Program.Program r Unit
 parTraverse_ f arr = void (parTraverse f arr)

@@ -8,7 +8,7 @@ module Test.Support.Fail
 
 import Prelude
 
-import Control.Monad.BatchRun (BatchRun, lift)
+import Control.Monad.Program (Program, lift)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Type.Proxy (Proxy(..))
@@ -25,7 +25,7 @@ _fail :: Proxy "fail"
 _fail = Proxy
 
 -- Public operation
-failNow :: forall r. String -> BatchRun (FAIL r) Unit
+failNow :: forall r. String -> Program (FAIL r) Unit
 failNow msg = lift _fail (Fail msg unit)
 
 -- Aff handler for FailF

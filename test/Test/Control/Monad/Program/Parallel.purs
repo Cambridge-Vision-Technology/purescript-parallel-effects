@@ -1,9 +1,9 @@
-module Test.Control.Monad.BatchRun.Parallel where
+module Test.Control.Monad.Program.Parallel where
 
 import Prelude
 
-import Control.Monad.BatchRun as Control.Monad.BatchRun
-import Control.Monad.BatchRun.Parallel as Control.Monad.BatchRun.Parallel
+import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Parallel as Control.Monad.Program.Parallel
 import Data.Array as Data.Array
 import Data.DateTime.Instant as Data.DateTime.Instant
 import Data.Time.Duration as Data.Time.Duration
@@ -15,17 +15,17 @@ import Test.Spec.Assertions as Test.Spec.Assertions
 import Test.Support.Delay as Test.Support.Delay
 
 spec :: Test.Spec.Spec Unit
-spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
+spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
   Test.Spec.describe "par2" do
     Test.Spec.it "runs two computations in parallel" do
       let
-        program = Control.Monad.BatchRun.Parallel.par2
+        program = Control.Monad.Program.Parallel.par2
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      Data.Tuple.Tuple _ _ <- Control.Monad.BatchRun.runParallel
-        (\v -> Control.Monad.BatchRun.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.BatchRun.impossibleVariant v)
+      Data.Tuple.Tuple _ _ <- Control.Monad.Program.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -39,11 +39,11 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
 
     Test.Spec.it "returns both results in a Tuple" do
       let
-        program = Control.Monad.BatchRun.Parallel.par2
+        program = Control.Monad.Program.Parallel.par2
           (pure "first")
           (pure "second")
 
-      Data.Tuple.Tuple first second <- Control.Monad.BatchRun.runPure program
+      Data.Tuple.Tuple first second <- Control.Monad.Program.runPure program
 
       first `Test.Spec.Assertions.shouldEqual` "first"
       second `Test.Spec.Assertions.shouldEqual` "second"
@@ -51,14 +51,14 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
   Test.Spec.describe "par3" do
     Test.Spec.it "runs three computations in parallel" do
       let
-        program = Control.Monad.BatchRun.Parallel.par3
+        program = Control.Monad.Program.Parallel.par3
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      Data.Tuple.Tuple _ (Data.Tuple.Tuple _ _) <- Control.Monad.BatchRun.runParallel
-        (\v -> Control.Monad.BatchRun.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.BatchRun.impossibleVariant v)
+      Data.Tuple.Tuple _ (Data.Tuple.Tuple _ _) <- Control.Monad.Program.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -72,12 +72,12 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
 
     Test.Spec.it "returns all three results in nested Tuples" do
       let
-        program = Control.Monad.BatchRun.Parallel.par3
+        program = Control.Monad.Program.Parallel.par3
           (pure "first")
           (pure "second")
           (pure "third")
 
-      Data.Tuple.Tuple first (Data.Tuple.Tuple second third) <- Control.Monad.BatchRun.runPure program
+      Data.Tuple.Tuple first (Data.Tuple.Tuple second third) <- Control.Monad.Program.runPure program
 
       first `Test.Spec.Assertions.shouldEqual` "first"
       second `Test.Spec.Assertions.shouldEqual` "second"
@@ -86,17 +86,17 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
   Test.Spec.describe "gather" do
     Test.Spec.it "runs an empty array" do
       let
-        program = Control.Monad.BatchRun.Parallel.gather []
+        program = Control.Monad.Program.Parallel.gather []
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` ([] :: Array Unit)
 
     Test.Spec.it "runs a single computation" do
       let
-        program = Control.Monad.BatchRun.Parallel.gather [ pure "only" ]
+        program = Control.Monad.Program.Parallel.gather [ pure "only" ]
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ "only" ]
 
@@ -108,11 +108,11 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
           , Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0)
           , Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0)
           ]
-        program = Control.Monad.BatchRun.Parallel.gather delays
+        program = Control.Monad.Program.Parallel.gather delays
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.BatchRun.runParallel
-        (\v -> Control.Monad.BatchRun.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.BatchRun.impossibleVariant v)
+      _ <- Control.Monad.Program.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -126,36 +126,36 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
 
     Test.Spec.it "preserves order of results" do
       let
-        program = Control.Monad.BatchRun.Parallel.gather
+        program = Control.Monad.Program.Parallel.gather
           [ pure 1
           , pure 2
           , pure 3
           , pure 4
           ]
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ 1, 2, 3, 4 ]
 
   Test.Spec.describe "parTraverse" do
     Test.Spec.it "maps empty array" do
       let
-        program = Control.Monad.BatchRun.Parallel.parTraverse pure ([] :: Array Int)
+        program = Control.Monad.Program.Parallel.parTraverse pure ([] :: Array Int)
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` []
 
     Test.Spec.it "maps and executes in parallel" do
       let
         -- Map each number to a delay
-        program = Control.Monad.BatchRun.Parallel.parTraverse
+        program = Control.Monad.Program.Parallel.parTraverse
           (\_ -> Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
           [ 1, 2, 3 ]
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.BatchRun.runParallel
-        (\v -> Control.Monad.BatchRun.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.BatchRun.impossibleVariant v)
+      _ <- Control.Monad.Program.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -169,24 +169,24 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
 
     Test.Spec.it "preserves order and transforms values" do
       let
-        program = Control.Monad.BatchRun.Parallel.parTraverse
+        program = Control.Monad.Program.Parallel.parTraverse
           (\n -> pure (n * 2))
           [ 1, 2, 3, 4 ]
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ 2, 4, 6, 8 ]
 
   Test.Spec.describe "parTraverse_" do
     Test.Spec.it "executes effects in parallel and discards results" do
       let
-        program = Control.Monad.BatchRun.Parallel.parTraverse_
+        program = Control.Monad.Program.Parallel.parTraverse_
           (\_ -> Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
           [ 1, 2, 3 ]
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.BatchRun.runParallel
-        (\v -> Control.Monad.BatchRun.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.BatchRun.impossibleVariant v)
+      _ <- Control.Monad.Program.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -200,10 +200,10 @@ spec = Test.Spec.describe "Control.Monad.BatchRun.Parallel" do
 
     Test.Spec.it "returns unit" do
       let
-        program = Control.Monad.BatchRun.Parallel.parTraverse_
+        program = Control.Monad.Program.Parallel.parTraverse_
           (\n -> pure (n * 2))
           [ 1, 2, 3 ]
 
-      result <- Control.Monad.BatchRun.runPure program
+      result <- Control.Monad.Program.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` unit

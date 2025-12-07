@@ -8,7 +8,7 @@ module Test.Support.Delay
 
 import Prelude
 
-import Control.Monad.BatchRun (BatchRun, lift)
+import Control.Monad.Program (Program, lift)
 import Data.Time.Duration (Milliseconds(..))
 import Effect.Aff (Aff, delay) as Aff
 import Type.Proxy (Proxy(..))
@@ -25,7 +25,7 @@ _delay :: Proxy "delay"
 _delay = Proxy
 
 -- Public operation
-delay :: forall r. Milliseconds -> BatchRun (DELAY r) Unit
+delay :: forall r. Milliseconds -> Program (DELAY r) Unit
 delay ms = lift _delay (Delay ms unit)
 
 -- Aff handler for DelayF

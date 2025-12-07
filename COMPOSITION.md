@@ -1,6 +1,6 @@
 # Elegant Effect Composition - Inspired by purescript-run
 
-This document explains how our BatchRun system achieves the same elegant effect composition pattern as `purescript-run`, while adding parallel execution capabilities.
+This document explains how our Program system achieves the same elegant effect composition pattern as `purescript-run`, while adding parallel execution capabilities.
 
 ## The Pattern
 
@@ -25,13 +25,13 @@ Programs use the polymorphic tail to remain open to additional effects:
 
 ```purescript
 -- This program only requires HTTP
-myProgram :: forall r. String -> BatchRun (HTTP r) String
+myProgram :: forall r. String -> Program (HTTP r) String
 
 -- This program requires HTTP and STATE
-statefulProgram :: forall r. BatchRun (HTTP (STATE Int r)) String
+statefulProgram :: forall r. Program (HTTP (STATE Int r)) String
 
 -- Can be used anywhere that has at least these effects
-useProgram :: BatchRun (HTTP (STATE Int (READER Config ()))) String
+useProgram :: Program (HTTP (STATE Int (READER Config ()))) String
 useProgram = statefulProgram
 ```
 
@@ -45,11 +45,11 @@ runHTTP
    . IsSymbol sym
   => Row.Cons sym HttpF q r  -- r = (sym :: HttpF | q)
   => Proxy sym
-  -> BatchRun r a              -- Input: has HTTP effect
-  -> Aff (BatchRun q a)        -- Output: HTTP removed!
+  -> Program r a              -- Input: has HTTP effect
+  -> Aff (Program q a)        -- Output: HTTP removed!
 ```
 
-**Key insight**: When `r = (http :: HttpF | q)`, handling the HTTP effect gives us `BatchRun q a` where `q` is everything except HTTP.
+**Key insight**: When `r = (http :: HttpF | q)`, handling the HTTP effect gives us `Program q a` where `q` is everything except HTTP.
 
 ### 4. Handler Implementation
 
@@ -79,12 +79,12 @@ runHTTPAt sym = loop
 Handlers compose naturally by removing effects one by one:
 
 ```purescript
-program :: forall r. BatchRun (HTTP (STATE String r)) Int
+program :: forall r. Program (HTTP (STATE String r)) Int
 
 -- Peel effects off right-to-left
 result = program
-  # runState ""       -- Removes STATE, returns Aff (BatchRun (HTTP r) (Tuple String Int))
-  >>= runHTTP         -- Removes HTTP, returns Aff (BatchRun r (Tuple String Int))
+  # runState ""       -- Removes STATE, returns Aff (Program (HTTP r) (Tuple String Int))
+  >>= runHTTP         -- Removes HTTP, returns Aff (Program r (Tuple String Int))
   >>= runPure         -- Requires r ~ (), returns Aff (Tuple String Int)
 ```
 
@@ -93,7 +93,7 @@ result = program
 ### `peel` - Inspect the next effect
 
 ```purescript
-peel :: forall r a. BatchRun r a -> Either (BatchF r (BatchRun r a)) a
+peel :: forall r a. Program r a -> Either (BatchF r (Program r a)) a
 ```
 
 Returns either:
@@ -119,15 +119,15 @@ Otherwise: applies second function to variant without that label
 ### `send` - Pass an effect through unchanged
 
 ```purescript
-send :: forall r a. VariantF r a -> BatchRun r a
+send :: forall r a. VariantF r a -> Program r a
 ```
 
-Lifts a VariantF back into BatchRun without handling it.
+Lifts a VariantF back into Program without handling it.
 
 ### `runPure` - Execute computation with no effects
 
 ```purescript
-runPure :: forall a. BatchRun () a -> Aff a
+runPure :: forall a. Program () a -> Aff a
 ```
 
 Executes a computation with an empty effect row, returning the result in Aff. Only works when all effects have been handled (empty row).
@@ -146,7 +146,7 @@ This is how handlers "remove" effects:
 ```purescript
 Row.Cons "http" HttpF q r  -- Says: r = (http :: HttpF | q)
 
--- Handler transforms: BatchRun r a -> BatchRun q a
+-- Handler transforms: Program r a -> Program q a
 -- The HTTP effect disappears from the type!
 ```
 
@@ -174,10 +174,10 @@ The `on` function lets you pattern match:
 
 Our implementation follows the same pattern:
 
-| Aspect | purescript-run | BatchRun |
+| Aspect | purescript-run | Program |
 |--------|----------------|----------|
 | Effect definition | `type EFFECT r = (label :: Effect | r)` | ✓ Same |
-| Program types | `Run (EFFECT r) a` | `BatchRun (EFFECT r) a` |
+| Program types | `Run (EFFECT r) a` | `Program (EFFECT r) a` |
 | Handler constraints | `Row.Cons sym f q r` | ✓ Same |
 | Handler pattern | `peel`, `on`, `send` | ✓ Same |
 | Handler composition | Right-to-left removal | ✓ Same |

@@ -2,9 +2,9 @@ module Test.Support.SafeEffects where
 
 import Prelude
 
-import Control.Monad.BatchRun as Control.Monad.BatchRun
-import Control.Monad.BatchRun.SafeAff as Control.Monad.BatchRun.SafeAff
-import Control.Monad.BatchRun.SafeEffect as Control.Monad.BatchRun.SafeEffect
+import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.SafeAff as Control.Monad.Program.SafeAff
+import Control.Monad.Program.SafeEffect as Control.Monad.Program.SafeEffect
 import Data.Either as Data.Either
 import Data.String as Data.String
 import Data.Time.Duration as Data.Time.Duration
@@ -38,37 +38,37 @@ delayedSuccessAff ms value = do
 liftSafeAffSuccess
   :: forall r a
    . a
-  -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
-liftSafeAffSuccess value = Control.Monad.BatchRun.SafeAff.liftSafeAff (successAff value)
+  -> Control.Monad.Program.Program (Control.Monad.Program.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
+liftSafeAffSuccess value = Control.Monad.Program.SafeAff.liftSafeAff (successAff value)
 
 -- | Lift a safe Aff that fails
 liftSafeAffFailure
   :: forall r a
    . String
-  -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
-liftSafeAffFailure msg = Control.Monad.BatchRun.SafeAff.liftSafeAff (failAff msg)
+  -> Control.Monad.Program.Program (Control.Monad.Program.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
+liftSafeAffFailure msg = Control.Monad.Program.SafeAff.liftSafeAff (failAff msg)
 
 -- | Lift a delayed safe Aff that succeeds
 liftSafeAffDelayed
   :: forall r a
    . Data.Time.Duration.Milliseconds
   -> a
-  -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
-liftSafeAffDelayed ms value = Control.Monad.BatchRun.SafeAff.liftSafeAff (delayedSuccessAff ms value)
+  -> Control.Monad.Program.Program (Control.Monad.Program.SafeAff.SAFE_AFF r) (Data.Either.Either Effect.Exception.Error a)
+liftSafeAffDelayed ms value = Control.Monad.Program.SafeAff.liftSafeAff (delayedSuccessAff ms value)
 
 -- | Lift a safe Effect that succeeds
 liftSafeEffectSuccess
   :: forall r a
    . a
-  -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeEffect.SAFE_EFFECT r) (Data.Either.Either Effect.Exception.Error a)
-liftSafeEffectSuccess value = Control.Monad.BatchRun.SafeEffect.liftSafeEffect (successEffect value)
+  -> Control.Monad.Program.Program (Control.Monad.Program.SafeEffect.SAFE_EFFECT r) (Data.Either.Either Effect.Exception.Error a)
+liftSafeEffectSuccess value = Control.Monad.Program.SafeEffect.liftSafeEffect (successEffect value)
 
 -- | Lift a safe Effect that fails
 liftSafeEffectFailure
   :: forall r a
    . String
-  -> Control.Monad.BatchRun.BatchRun (Control.Monad.BatchRun.SafeEffect.SAFE_EFFECT r) (Data.Either.Either Effect.Exception.Error a)
-liftSafeEffectFailure msg = Control.Monad.BatchRun.SafeEffect.liftSafeEffect (failEffect msg)
+  -> Control.Monad.Program.Program (Control.Monad.Program.SafeEffect.SAFE_EFFECT r) (Data.Either.Either Effect.Exception.Error a)
+liftSafeEffectFailure msg = Control.Monad.Program.SafeEffect.liftSafeEffect (failEffect msg)
 
 -- | Check if an Either is Right with the expected value
 isRightWith :: forall e a. Eq a => Data.Either.Either e a -> a -> Boolean
