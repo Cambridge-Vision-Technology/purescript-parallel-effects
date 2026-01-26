@@ -15,6 +15,7 @@ module Control.Monad.Program.State
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol as Data.Symbol
 import Data.Tuple as Data.Tuple
@@ -74,7 +75,7 @@ runStateAt
   -> Effect.Aff.Aff (Data.Tuple.Tuple a s)
 runStateAt sym initialState handler prog = do
   stateVar <- Effect.Aff.AVar.new initialState
-  result <- Control.Monad.Program.runParallel (\v -> Data.Functor.Variant.on sym (handleStateOp stateVar) handler v) prog
+  result <- Control.Monad.Program.Aff.runParallel (\v -> Data.Functor.Variant.on sym (handleStateOp stateVar) handler v) prog
   finalState <- Effect.Aff.AVar.read stateVar
   pure $ Data.Tuple.Tuple result finalState
 

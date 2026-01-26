@@ -2,7 +2,8 @@ module Test.Control.Monad.Program where
 
 import Prelude
 
-import Control.Monad.Program (Program, on, runParallel, impossibleVariant, runPure)
+import Control.Monad.Program (Program, on)
+import Control.Monad.Program.Aff (runParallel, impossibleVariant, runPure)
 import Control.Monad.Program.Logging (LOGGING, LoggingF(..), _logging, info)
 import Data.Array as Array
 import Data.Functor.Variant as V

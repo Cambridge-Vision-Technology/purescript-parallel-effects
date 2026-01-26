@@ -16,6 +16,7 @@ import Prelude
 
 import Control.Applicative.Free as Control.Applicative.Free
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -70,7 +71,7 @@ error = log Error
 
 -- | Handle LOGGING effects for programs with only LOGGING (no other effects)
 runLogging :: forall a. Control.Monad.Program.Program (LOGGING ()) a -> Effect.Aff.Aff a
-runLogging = runLoggingAt _logging Control.Monad.Program.impossibleVariant
+runLogging = runLoggingAt _logging Control.Monad.Program.Aff.impossibleVariant
 
 -- | Handle LOGGING effects at a specific label
 runLoggingAt
@@ -82,7 +83,7 @@ runLoggingAt
   -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runLoggingAt sym handler prog =
-  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleLogging handler v) prog
+  Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on sym handleLogging handler v) prog
   where
   handleLogging :: LoggingF ~> Effect.Aff.Aff
   handleLogging (Log level msg next) = do

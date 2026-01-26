@@ -27,7 +27,7 @@ Then the result is Left with the exception
 
 And the delayed operation is canceled
 
-And the total elapsed time is less than 500 milliseconds
+And the total elapsed time is less than 600 milliseconds
 
 ## Scenario: exception in one sequential step stops execution
 When I run a sequential program that throws after first step

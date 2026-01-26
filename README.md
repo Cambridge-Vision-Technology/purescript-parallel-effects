@@ -241,25 +241,87 @@ results <- do
 ## Project Structure
 
 ```
-src/
+src/                                   # JavaScript-specific modules
 ├── Control/
 │   └── Monad/
-│       ├── Program.purs           # Core types and interpreter
-│       ├── Parallel.purs           # Parallel composition helpers
+│       ├── Concurrent/
+│       │   ├── Class.purs           # MonadConcurrent type class + Effect instance (portable)
+│       │   ├── Aff.purs             # ConcurrentAff newtype for JavaScript backend
+│       │   └── Erl.purs             # Erlang FFI helpers (internal)
 │       └── Program/
-│           ├── SafeAff.purs        # Safe Aff with typed errors
-│           ├── SafeEffect.purs     # Safe Effect with typed errors
-│           ├── Reader.purs         # Reader effect
-│           ├── State.purs          # State effect
-│           ├── Writer.purs         # Writer effect
-│           ├── HTTP.purs           # HTTP effects (test/example)
-│           ├── FileSystem.purs     # FileSystem effects (test/example)
-│           └── Logging.purs        # Logging effects (test/example)
-├── Demo.purs                        # Demo application
-└── Main.purs                        # Library entry point
+│           ├── Aff.purs             # Aff-specific interpreters (runParallel, runPure)
+│           ├── Parallel.purs        # Parallel composition helpers (par2, gather, etc.)
+│           ├── SafeAff.purs         # Safe Aff with typed errors
+│           ├── SafeEffect.purs      # Safe Effect with typed errors
+│           ├── Reader.purs          # Reader effect
+│           ├── State.purs           # State effect
+│           ├── Writer.purs          # Writer effect
+│           ├── HTTP.purs            # HTTP effects (test/example)
+│           ├── FileSystem.purs      # FileSystem effects (test/example)
+│           └── Logging.purs         # Logging effects (test/example)
+└── Test/
+    └── BDD/
+        └── Runner.purs              # BDD test runner
+
+shared/                               # Portable modules (JS + Erlang)
+├── Control/
+│   └── Monad/
+│       └── Program.purs             # Core Program monad (portable)
+└── Test/
+    └── Support/
+        ├── Portable.purs            # Portable test infrastructure
+        └── DelayPortable.purs       # Portable delay abstraction
+
+shared-demo/                          # Portable demo app modules
+└── Demo/
+    ├── Commands.purs                # Command dispatcher
+    ├── ParallelTiming.purs          # Parallel delay demo
+    ├── ParallelWrite.purs           # Concurrent file I/O demo
+    ├── CancelFiber.purs             # Fiber cancellation demo
+    ├── ErrorPropagation.purs        # Error handling demo
+    └── GatherResults.purs           # Result collection demo
 ```
 
-**Core Effects (shipped with library):**
+### Module Organization
+
+The codebase is organized to support both JavaScript (Aff) and Erlang (Effect) backends:
+
+| Module | Location | Purpose | Backend |
+|--------|----------|---------|---------|
+| `Control.Monad.Concurrent.Class` | `src/` | Type class + Effect instance | Portable |
+| `Control.Monad.Concurrent.Aff` | `src/` | ConcurrentAff newtype | JS only |
+| `Control.Monad.Program` | `shared/` | Core Program monad | Portable |
+| `Control.Monad.Program.Aff` | `src/` | Aff-specific interpreters | JS only |
+
+### Import Patterns by Backend
+
+**JavaScript (Aff) backend:**
+```purescript
+-- For MonadConcurrent operations
+import Control.Monad.Concurrent.Aff (ConcurrentAff, runConcurrentAff, class MonadConcurrent, fork, join, cancel, parTuple)
+
+-- For Program monad with parallel execution
+import Control.Monad.Program.Aff (Program, runParallel, runPure, impossibleVariant)
+```
+
+**Erlang (Effect) backend:**
+```purescript
+-- For MonadConcurrent operations (Effect instance)
+import Control.Monad.Concurrent.Class (class MonadConcurrent, fork, join, cancel, parTuple)
+
+-- For Program monad
+import Control.Monad.Program (Program, run, runPar, impossibleVariantM)
+```
+
+**Writing portable code:**
+```purescript
+-- Use the MonadConcurrent constraint for portable concurrent code
+myPortableComputation :: forall m. MonadConcurrent m => m (Tuple Int Int)
+myPortableComputation = parTuple (pure 1) (pure 2)
+```
+
+### Core Effects (shipped with library)
+
 - **SafeAff** - Wrap Aff computations with typed error handling (`Either Error a`)
 - **SafeEffect** - Wrap Effect computations with typed error handling (`Either Error a`)
 - **Reader** - Read-only environment access
@@ -267,8 +329,9 @@ src/
 - **Writer** - Accumulate monoidal values
 - **Parallel** - Helper functions for explicit parallel composition (`par2`, `par3`, `gather`, `parTraverse`)
 
-**Example Effects (for testing/demonstrations):**
-- HTTP, FileSystem, Logging - Demonstrate patterns but not part of core library
+### Example Effects (for testing/demonstrations)
+
+HTTP, FileSystem, Logging - Demonstrate patterns but not part of core library
 
 ## Behavior Specs (BDD Markdown)
 
@@ -297,6 +360,111 @@ nix build .#demo
 nix develop
 ```
 
+## Running on Erlang
+
+This library supports the **Erlang/OTP** backend via [purerl](https://github.com/purerl/purerl), enabling the same `MonadConcurrent` code to run on both JavaScript (via Aff) and Erlang (via native processes).
+
+### Compiling PureScript to Erlang
+
+The project uses purerl to compile PureScript to Erlang source, then erlc to compile to BEAM bytecode:
+
+```bash
+# Compile a simple hello-world example to Erlang
+nix build .#hello-erl
+
+# Compile the MonadConcurrent test suite to Erlang
+nix build .#test-concurrent-erl-output   # Erlang source
+nix build .#test-concurrent-erl-beam     # Compiled BEAM files
+```
+
+### Running Erlang Tests
+
+```bash
+# Run MonadConcurrent portable tests on Erlang backend
+nix run .#test-concurrent-erl
+
+# Run the same tests on JavaScript backend (for comparison)
+nix run .#test-concurrent-js
+```
+
+Both backends should produce identical test results:
+
+```
+=== Portable Tests (Erlang/Effect) ===
+
+Running MonadConcurrent portable tests (with timing)...
+[PASS] fork >=> join identity for pure values
+[PASS] fork >=> join preserves computation results
+...
+Results: 9/9 tests passed
+
+Running Program portable tests (with timing)...
+[PASS] runPure returns pure values
+...
+Results: 4/4 tests passed
+
+Running Parallel portable tests (with timing)...
+[PASS] par2 returns both results
+...
+Results: 4/4 tests passed
+
+Running Orchestration portable tests (with timing)...
+[PASS] orchestrates multiple Programs with different handlers
+...
+Results: 3/3 tests passed
+
+All tests passed!
+```
+
+**Total:** 20 portable tests run on both JavaScript and Erlang backends.
+
+### Verifying Backend Parity
+
+To verify both backends produce identical results:
+
+```bash
+# Run the concurrent-parity check (compares JS and Erlang outputs)
+nix build .#checks.aarch64-darwin.concurrent-parity  # macOS ARM
+nix build .#checks.x86_64-linux.concurrent-parity    # Linux x86_64
+
+# Or run all checks including parity verification
+nix flake check
+```
+
+### Verifying Parallelism
+
+Both backends include a timing test that verifies parallelism:
+
+**Test:** Two 200ms operations run via `parTuple` should complete in ~200ms (parallel), not ~400ms (sequential).
+
+- **JavaScript (Aff):** Uses `Aff.forkAff` for fiber-based parallelism
+- **Erlang (Effect):** Uses native Erlang processes via `spawn_monitor`
+
+The timing threshold is set to 350ms to account for scheduling overhead while still detecting sequential execution.
+
+### Basic Usage Example
+
+```purescript
+import Control.Monad.Concurrent.Class (class MonadConcurrent, fork, join, parTuple)
+
+-- This code runs on BOTH JavaScript and Erlang backends
+parallelExample :: forall m. MonadConcurrent m => m (Tuple Int Int)
+parallelExample = parTuple
+  (pure 1)   -- Runs in parallel
+  (pure 2)   -- Runs in parallel
+
+-- On JavaScript: interpreted via Aff fibers
+-- On Erlang: interpreted via native Erlang processes
+```
+
+### Erlang Implementation Details
+
+The Erlang backend uses:
+- `erlang:spawn_monitor/1` for forking computations
+- ETS tables for result caching (enables multiple joins on the same fiber)
+- `erlang:exit/2` for fiber cancellation
+- Native Erlang process mailbox for join synchronization
+
 ## Tests
 
 This repo uses BDD Markdown feature files for behavior-focused tests (powered by @bifravst/bdd-markdown, packaged via Nix).
@@ -306,6 +474,129 @@ This repo uses BDD Markdown feature files for behavior-focused tests (powered by
 - Run the BDD specs interactively:
   - `nix run .#test-playback -- test/features/*.feature.md`
   - The runner is compiled PureScript at `src/Test/BDD/Runner.purs` and is invoked by `test/bdd/steps.mjs`.
+
+### Running BDD Tests (MonadConcurrent Demo App)
+
+The MonadConcurrent abstraction is tested via a BDD approach using Cucumber and a demo CLI app. This enables 100% test portability across JavaScript and Erlang backends by testing only observable behavior (stdout, files, timing, exit codes).
+
+**Run all BDD tests:**
+
+```bash
+nix run .#test-bdd-demo
+```
+
+**Run tests for a specific backend:**
+
+```bash
+# JavaScript backend only
+nix run .#test-bdd-demo -- --tags @js
+
+# Erlang backend only
+nix run .#test-bdd-demo -- --tags @erl
+```
+
+**Run tests for a specific feature:**
+
+```bash
+# Parallel timing tests only
+nix run .#test-bdd-demo -- --tags @parallel
+
+# Fiber cancellation tests only
+nix run .#test-bdd-demo -- --tags @cancel
+
+# Error propagation tests only
+nix run .#test-bdd-demo -- --tags @error
+
+# Gather results tests only
+nix run .#test-bdd-demo -- --tags @gather
+```
+
+**Test coverage:**
+
+The BDD tests verify MonadConcurrent features across both backends:
+
+| Feature | Scenarios | What It Tests |
+|---------|-----------|---------------|
+| `parallel-execution.feature` | 10 | Parallel delays and concurrent file I/O with timestamps |
+| `fiber-cancellation.feature` | 6 | Canceling long-running fibers completes quickly |
+| `error-propagation.feature` | 8 | Failed fibers propagate errors correctly |
+| `gather-results.feature` | 10 | Collecting results from multiple fibers |
+| **Total** | **34** | **Both JavaScript and Erlang backends (17 JS + 17 Erlang)** |
+
+**Directory structure:**
+
+```
+test/bdd/
+├── cucumber.js           # Cucumber configuration
+├── package.json          # Node.js dependencies (Cucumber)
+├── features/             # Gherkin feature files
+│   ├── parallel-timing.feature
+│   ├── parallel-execution.feature
+│   ├── fiber-cancellation.feature
+│   ├── error-propagation.feature
+│   └── gather-results.feature
+├── steps/                # Step definitions (JavaScript)
+│   └── demo_steps.js     # Given/When/Then implementations
+└── support/              # Test helpers
+    └── world.js          # Cucumber World class with assertions
+```
+
+### Adding New BDD Scenarios
+
+1. **Create or update a feature file** in `test/bdd/features/`:
+
+   ```gherkin
+   Feature: My Feature
+     As a developer using MonadConcurrent
+     I want to verify specific behavior
+     So my program works correctly
+
+     @demo @my-tag @js
+     Scenario: My scenario (JavaScript)
+       Given I have the demo app built for "js"
+       When I run the "my-command" command
+       Then the command should succeed
+       And stdout should contain "expected output"
+
+     @demo @my-tag @erl
+     Scenario: My scenario (Erlang)
+       Given I have the demo app built for "erl"
+       When I run the "my-command" command
+       Then the command should succeed
+       And stdout should contain "expected output"
+   ```
+
+2. **Add demo app commands** if needed:
+   - JavaScript: `demo-app/src/Demo/MyCommand.purs` (uses `MonadConcurrent m` constraint)
+   - Erlang: `demo-app-erl/src/Demo/MyCommand.purs` (uses concrete `Effect` type)
+   - Update `Commands.purs` to dispatch to new command
+
+3. **Add step definitions** if the existing steps are insufficient:
+   - Edit `test/bdd/steps/demo_steps.js`
+   - Available assertions from World class:
+     - `assertContains(stdout, expected)`
+     - `assertLessThan(value, threshold, message)`
+     - `assertFileExists(path)`
+     - `assertTimestampsClose(ts1, ts2, toleranceMs)`
+     - `parseElapsedTime(stdout)` - extracts "Elapsed: Xms" from output
+
+4. **Run the new scenarios:**
+
+   ```bash
+   nix run .#test-bdd-demo -- --tags @my-tag
+   ```
+
+### Demo App Commands
+
+The demo app supports these commands for BDD testing:
+
+| Command | Purpose | Key Observable Behavior |
+|---------|---------|------------------------|
+| `parallel-timing` | Test parallel delays | Completes in ~200ms, outputs "Result A" and "Result B" |
+| `parallel-write <dir>` | Test concurrent file I/O | Creates file1.txt and file2.txt with close timestamps |
+| `cancel-fiber` | Test fiber cancellation | Completes quickly (<500ms), outputs "Cancelled: true" |
+| `error-propagation` | Test error handling | Outputs "Error captured: true" and error message |
+| `gather-results` | Test result collection | Outputs "Values: [10,20,30,40,50]" in ~100ms |
 
 ## Elegant Composition Pattern
 

@@ -2,7 +2,8 @@ module Test.DemoComposed where
 
 import Prelude
 
-import Control.Monad.Program (Program, on, runParallel, impossibleVariant)
+import Control.Monad.Program (Program, on)
+import Control.Monad.Program.Aff (runParallel, impossibleVariant)
 import Control.Monad.Program.HTTP (HTTP, HttpF(..), _http, get)
 import Control.Monad.Program.Logging (LOGGING, LoggingF(..), _logging, info, debug)
 import Data.Array as Array

@@ -112,30 +112,583 @@
     }
   ],
   [
+    "Control.Monad.Concurrent MonadConcurrent Aff cancel cancel allows other fibers to continue",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff cancel cancel terminates a computation",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff fork/join law fork >=> join should be identity for pure values",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff fork/join law fork >=> join should preserve complex computation results",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff fork/join law fork >=> join should preserve computation results",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTraverseM preserves order of results",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTraverseM returns Left when any computation fails",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTraverseM runs all computations in parallel (timing test)",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTuple returns Left when first computation fails",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTuple returns Left when second computation fails",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTuple returns both results as a tuple",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent Aff parTuple runs two computations in parallel (timing test)",
+    {
+      "timestamp": "1769347932099.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff cancel cancel allows other fibers to continue",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff cancel cancel terminates a computation",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff fork/join law fork >=> join should be identity for pure values",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff fork/join law fork >=> join should preserve complex computation results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff fork/join law fork >=> join should preserve computation results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTraverseM preserves order of results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTraverseM returns Left when any computation fails",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTraverseM runs all computations in parallel (timing test)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTuple returns Left when first computation fails",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTuple returns Left when second computation fails",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTuple returns both results as a tuple",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Concurrent MonadConcurrent ConcurrentAff parTuple runs two computations in parallel (timing test)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program Applicative batching allows applicative composition",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program LOGGING effect handles logging effects",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program runPure returns pure values with empty effect row",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel gather preserves order of results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel gather runs a single computation",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel gather runs an empty array",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel gather runs multiple computations in parallel",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel par2 returns both results in a Tuple",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel par2 runs two computations in parallel",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel par3 returns all three results in nested Tuples",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel par3 runs three computations in parallel",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel parTraverse maps and executes in parallel",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel parTraverse maps empty array",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel parTraverse preserves order and transforms values",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel parTraverse_ executes effects in parallel and discards results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.Parallel parTraverse_ returns unit",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar basic functionality runs pure values correctly",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar basic functionality runs single effects correctly",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar basic functionality sequences monadic operations correctly",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar edge cases handles deeply nested applicative composition",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar edge cases handles empty effect row (via runPure)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar edge cases handles single-element applicative",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar parallel execution timing applicative delays run in parallel (3x 200ms in ~200ms)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar parallel execution timing mixed sequential and parallel operations work correctly",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar parallel execution timing sequential delays add up with do (sanity check)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar runParallel backward compatibility runParallel and runPar produce same results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar runParallel backward compatibility runParallel still works (deprecated alias)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar works with existing effect handlers composes multiple effect handlers",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Control.Monad.Program.runPar works with existing effect handlers preserves applicative batching behavior",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
     "DemoComposed composedProgram type composes HTTP and LOGGING effects",
     {
-      "timestamp": "1763482362518.0",
+      "timestamp": "1769434767303.0",
       "success": true
     }
   ],
   [
     "DemoComposed parallel HTTP requests executes multiple HTTP requests with applicative",
     {
-      "timestamp": "1763482362518.0",
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests cancel cancel terminates long-running computation",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests fork/join identity fork >=> join identity for pure values",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests fork/join identity fork >=> join preserves computation results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests multiple joins multiple joins return consistent results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests parTraverseM parTraverseM preserves order",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests parTuple parTuple returns both results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "MonadConcurrent Portable Tests parTuple parTuple timing: 2x200ms completes in parallel (<350ms)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Cancellation terminates computation cancel does not affect other fibers",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Cancellation terminates computation cancel returns quickly (does not wait for computation)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Cancellation terminates computation cancel terminates a long-running forked Program computation",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Complex orchestration patterns can selectively cancel some fibers while waiting for others",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Complex orchestration patterns orchestrates multiple Programs with different handlers",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Explicit fork-join at orchestration layer forked Programs run in parallel (timing test)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Explicit fork-join at orchestration layer forks two independent Program computations and joins both",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Explicit fork-join at orchestration layer uses parTuple to run two Programs in parallel",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Portable Tests multiple Programs with different handlers orchestrates multiple Programs with different handlers",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Portable Tests selective fiber cancellation selective fiber cancellation timing (<500ms for cancelled long-running fiber)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Orchestration Portable Tests selective fiber cancellation selective fiber cancellation works",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallel Portable Tests gather gather returns correct results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallel Portable Tests gather gather timing: 3x200ms completes in parallel (<350ms)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallel Portable Tests par2 par2 returns both results",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Parallel Portable Tests par3 par3 returns all three results",
+    {
+      "timestamp": "1769434767303.0",
       "success": true
     }
   ],
   [
     "Parallelism timing applicative delays should run in parallel with <*>",
     {
-      "timestamp": "1763482362518.0",
+      "timestamp": "1769434767303.0",
       "success": true
     }
   ],
   [
     "Parallelism timing sequential delays add up with do",
     {
-      "timestamp": "1763482362518.0",
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Program Portable Tests applicative composition composes multiple effects",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Program Portable Tests applicative composition composes single effect",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Program Portable Tests parallel execution runPar executes applicative branches in parallel (<350ms for 2x200ms)",
+    {
+      "timestamp": "1769434767303.0",
+      "success": true
+    }
+  ],
+  [
+    "Program Portable Tests runPure/runPar runPure returns pure values",
+    {
+      "timestamp": "1769434767303.0",
       "success": true
     }
   ]

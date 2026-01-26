@@ -15,6 +15,7 @@ import Affjax.RequestBody as Affjax.RequestBody
 import Affjax.ResponseFormat as Affjax.ResponseFormat
 import Control.Applicative.Free as Control.Applicative.Free
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -48,7 +49,7 @@ post url body = Control.Monad.Program.lift _http (Post url body identity)
 
 -- | Handle HTTP effects for programs with only HTTP (no other effects)
 runHTTP :: forall a. Control.Monad.Program.Program (HTTP ()) a -> Effect.Aff.Aff a
-runHTTP = runHTTPAt _http Control.Monad.Program.impossibleVariant
+runHTTP = runHTTPAt _http Control.Monad.Program.Aff.impossibleVariant
 
 -- | Handle HTTP effects at a specific label
 runHTTPAt
@@ -60,7 +61,7 @@ runHTTPAt
   -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runHTTPAt sym handler prog =
-  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleHTTP handler v) prog
+  Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on sym handleHTTP handler v) prog
   where
   handleHTTP :: HttpF ~> Effect.Aff.Aff
   handleHTTP (Get url cont) = do

@@ -1,0 +1,13 @@
+{
+  "name": "purescript-parallel-effects-bdd",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BDD tests for MonadConcurrent demo app using Cucumber",
+  "scripts": {
+    "test": "cucumber-js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.3.1"
+  }
+}
