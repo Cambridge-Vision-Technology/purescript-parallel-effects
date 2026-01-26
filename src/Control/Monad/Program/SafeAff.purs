@@ -10,6 +10,7 @@ module Control.Monad.Program.SafeAff
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol (class IsSymbol)
@@ -54,7 +55,7 @@ runSafeAff
   :: forall a
    . Control.Monad.Program.Program (SAFE_AFF ()) a
   -> Effect.Aff.Aff a
-runSafeAff = runSafeAffAt _safeAff Control.Monad.Program.impossibleVariant
+runSafeAff = runSafeAffAt _safeAff Control.Monad.Program.Aff.impossibleVariant
 
 -- | Handle SAFE_AFF effects at a specific label
 -- | Executes the wrapped Aff with Effect.Aff.attempt to catch errors
@@ -67,7 +68,7 @@ runSafeAffAt
   -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runSafeAffAt sym handler prog =
-  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleSafeAff handler v) prog
+  Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on sym handleSafeAff handler v) prog
   where
   handleSafeAff :: SafeAffF ~> Effect.Aff.Aff
   handleSafeAff (SafeAffF aff) = aff

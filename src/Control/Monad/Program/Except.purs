@@ -20,6 +20,7 @@ module Control.Monad.Program.Except
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Maybe as Data.Maybe
@@ -73,7 +74,7 @@ runExceptAt sym handler prog = do
   exceptVar <- Effect.Aff.AVar.empty
 
   -- Run the program with exception handling
-  result <- Effect.Aff.attempt $ Control.Monad.Program.runParallel (handlers exceptVar) prog
+  result <- Effect.Aff.attempt $ Control.Monad.Program.Aff.runParallel (handlers exceptVar) prog
 
   case result of
     Data.Either.Left err -> do

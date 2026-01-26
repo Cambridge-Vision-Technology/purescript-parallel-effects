@@ -13,6 +13,7 @@ module Control.Monad.Program.Reader
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol as Data.Symbol
 import Effect.Aff as Effect.Aff
@@ -56,7 +57,7 @@ runReaderAt
   -> (forall x. Data.Functor.Variant.VariantF r1 x -> Effect.Aff.Aff x)
   -> Control.Monad.Program.Program r2 a
   -> Effect.Aff.Aff a
-runReaderAt sym env handler = Control.Monad.Program.runParallel handlers
+runReaderAt sym env handler = Control.Monad.Program.Aff.runParallel handlers
   where
   handlers :: forall x. Data.Functor.Variant.VariantF r2 x -> Effect.Aff.Aff x
   handlers = Data.Functor.Variant.on sym handleReader handler

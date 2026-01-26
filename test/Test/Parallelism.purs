@@ -2,7 +2,8 @@ module Test.Parallelism where
 
 import Prelude
 
-import Control.Monad.Program (on, runParallel, impossibleVariant)
+import Control.Monad.Program (on)
+import Control.Monad.Program.Aff (runParallel, impossibleVariant)
 import Data.DateTime.Instant (unInstant)
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Milliseconds(..))

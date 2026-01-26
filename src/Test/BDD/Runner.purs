@@ -3,6 +3,7 @@ module Test.BDD.Runner where
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Control.Monad.Program.Except as Control.Monad.Program.Except
 import Control.Monad.Program.Reader as Control.Monad.Program.Reader
 import Control.Monad.Program.SafeAff as Control.Monad.Program.SafeAff
@@ -96,7 +97,7 @@ runParallelCancellation ms msg = Effect.Aff.launchAff_ do
       <*> failNow msg
 
   start <- Effect.Class.liftEffect Effect.Now.now
-  outcome <- Effect.Aff.attempt $ Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on _fail handleFail (Control.Monad.Program.on _delay handleDelay Control.Monad.Program.impossibleVariant) v) program
+  outcome <- Effect.Aff.attempt $ Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on _fail handleFail (Control.Monad.Program.on _delay handleDelay Control.Monad.Program.Aff.impossibleVariant) v) program
   end <- Effect.Class.liftEffect Effect.Now.now
 
   let
@@ -113,13 +114,13 @@ runParallelCancellation ms msg = Effect.Aff.launchAff_ do
 runReaderAskTwice :: String -> Effect.Effect Unit
 runReaderAskTwice env = Effect.Aff.launchAff_ do
   let program = (\a b -> a <> b) <$> Control.Monad.Program.Reader.ask <*> Control.Monad.Program.Reader.ask
-  result <- Control.Monad.Program.Reader.runReader env Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Reader.runReader env Control.Monad.Program.Aff.impossibleVariant program
   Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"" <> sanitize result <> "\"}"
 
 runStateParallelModify :: Effect.Effect Unit
 runStateParallelModify = Effect.Aff.launchAff_ do
   let program = (\_ _ -> unit) <$> Control.Monad.Program.State.modify (_ + 1) <*> Control.Monad.Program.State.modify (_ + 1)
-  result <- Control.Monad.Program.State.runState 0 Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.State.runState 0 Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Tuple.Tuple _ final -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"finalState\":" <> show final <> "}"
 
@@ -151,11 +152,11 @@ runLabeledState = Effect.Aff.launchAff_ do
     handlers :: forall x. Data.Functor.Variant.VariantF (counterState :: Control.Monad.Program.State.StateF Int, nameState :: Control.Monad.Program.State.StateF String) x -> Effect.Aff.Aff x
     handlers = Data.Functor.Variant.on _counterState (handleCounterState counterVar)
       ( Data.Functor.Variant.on _nameState (handleNameState nameVar)
-          Control.Monad.Program.impossibleVariant
+          Control.Monad.Program.Aff.impossibleVariant
       )
 
   -- Run the program with the composite handler
-  result <- Control.Monad.Program.runParallel handlers program
+  result <- Control.Monad.Program.Aff.runParallel handlers program
 
   -- Read final states
   counterFinal <- Effect.Aff.AVar.read counterVar
@@ -222,11 +223,11 @@ runLabeledStateParallel = Effect.Aff.launchAff_ do
     handlers :: forall x. Data.Functor.Variant.VariantF (counterState :: Control.Monad.Program.State.StateF Int, nameState :: Control.Monad.Program.State.StateF String) x -> Effect.Aff.Aff x
     handlers = Data.Functor.Variant.on _counterState (handleCounterStateP counterVar)
       ( Data.Functor.Variant.on _nameState (handleNameStateP nameVar)
-          Control.Monad.Program.impossibleVariant
+          Control.Monad.Program.Aff.impossibleVariant
       )
 
   -- Run the program with the composite handler
-  _ <- Control.Monad.Program.runParallel handlers program
+  _ <- Control.Monad.Program.Aff.runParallel handlers program
 
   -- Read final states
   counterFinal <- Effect.Aff.AVar.read counterVar
@@ -282,10 +283,10 @@ runLabeledReader = Effect.Aff.launchAff_ do
     handlers :: forall x. Data.Functor.Variant.VariantF (configReader :: Control.Monad.Program.Reader.ReaderF String, userReader :: Control.Monad.Program.Reader.ReaderF String) x -> Effect.Aff.Aff x
     handlers = Data.Functor.Variant.on _configReader handleConfigReader
       ( Data.Functor.Variant.on _userReader handleUserReader
-          Control.Monad.Program.impossibleVariant
+          Control.Monad.Program.Aff.impossibleVariant
       )
 
-  result <- Control.Monad.Program.runParallel handlers program
+  result <- Control.Monad.Program.Aff.runParallel handlers program
   Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"" <> sanitize result <> "\"}"
   where
   handleConfigReader :: forall x. Control.Monad.Program.Reader.ReaderF String x -> Effect.Aff.Aff x
@@ -319,10 +320,10 @@ runLabeledWriter = Effect.Aff.launchAff_ do
     handlers :: forall x. Data.Functor.Variant.VariantF (logWriter :: Control.Monad.Program.Writer.WriterF String, auditWriter :: Control.Monad.Program.Writer.WriterF String) x -> Effect.Aff.Aff x
     handlers = Data.Functor.Variant.on _logWriter (handleLogWriter logRef)
       ( Data.Functor.Variant.on _auditWriter (handleAuditWriter auditRef)
-          Control.Monad.Program.impossibleVariant
+          Control.Monad.Program.Aff.impossibleVariant
       )
 
-  _ <- Control.Monad.Program.runParallel handlers program
+  _ <- Control.Monad.Program.Aff.runParallel handlers program
 
   logOutput <- Effect.Class.liftEffect $ Effect.Ref.read logRef
   auditOutput <- Effect.Class.liftEffect $ Effect.Ref.read auditRef
@@ -369,11 +370,11 @@ runLabeledCombo = Effect.Aff.launchAff_ do
     handlers = Data.Functor.Variant.on _myState (handleState stateVar)
       ( Data.Functor.Variant.on _myReader handleReader
           ( Data.Functor.Variant.on _myWriter (handleWriter writerRef)
-              Control.Monad.Program.impossibleVariant
+              Control.Monad.Program.Aff.impossibleVariant
           )
       )
 
-  result <- Control.Monad.Program.runParallel handlers program
+  result <- Control.Monad.Program.Aff.runParallel handlers program
   finalState <- Effect.Aff.AVar.read stateVar
   writerOutput <- Effect.Class.liftEffect $ Effect.Ref.read writerRef
 
@@ -407,7 +408,7 @@ runExceptThrow msg = Effect.Aff.launchAff_ do
     program :: Control.Monad.Program.Program (Control.Monad.Program.Except.EXCEPT String ()) Unit
     program = Control.Monad.Program.Except.throw msg
 
-  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Either.Left e -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize e <> "\"}"
     Data.Either.Right _ -> Effect.Class.liftEffect $ Effect.Console.log "{\"result\":\"Right\"}"
@@ -418,7 +419,7 @@ runExceptSuccess = Effect.Aff.launchAff_ do
     program :: Control.Monad.Program.Program (Control.Monad.Program.Except.EXCEPT String ()) Int
     program = pure 42
 
-  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Either.Left e -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize e <> "\"}"
     Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right\",\"value\":" <> show v <> "}"
@@ -429,7 +430,7 @@ runExceptRethrow msg = Effect.Aff.launchAff_ do
     program :: Control.Monad.Program.Program (Control.Monad.Program.Except.EXCEPT String ()) Int
     program = Control.Monad.Program.Except.rethrow (Data.Either.Left msg)
 
-  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Either.Left e -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize e <> "\"}"
     Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right\",\"value\":" <> show v <> "}"
@@ -440,7 +441,7 @@ runExceptNote msg = Effect.Aff.launchAff_ do
     program :: Control.Monad.Program.Program (Control.Monad.Program.Except.EXCEPT String ()) Int
     program = Control.Monad.Program.Except.note msg Data.Maybe.Nothing
 
-  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Either.Left e -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize e <> "\"}"
     Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right\",\"value\":" <> show v <> "}"
@@ -454,7 +455,7 @@ runExceptParallelCancel ms = Effect.Aff.launchAff_ do
       <*> delay ms
 
   start <- Effect.Class.liftEffect Effect.Now.now
-  result <- Control.Monad.Program.Except.runExcept (\v -> Control.Monad.Program.on _delay handleDelay Control.Monad.Program.impossibleVariant v) program
+  result <- Control.Monad.Program.Except.runExcept (\v -> Control.Monad.Program.on _delay handleDelay Control.Monad.Program.Aff.impossibleVariant v) program
   end <- Effect.Class.liftEffect Effect.Now.now
 
   let
@@ -475,7 +476,7 @@ runExceptSequential = Effect.Aff.launchAff_ do
       _ <- Control.Monad.Program.Except.throw "step failed"
       pure "step2"
 
-  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.impossibleVariant program
+  result <- Control.Monad.Program.Except.runExcept Control.Monad.Program.Aff.impossibleVariant program
   case result of
     Data.Either.Left e -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Left\",\"error\":\"" <> sanitize e <> "\"}"
     Data.Either.Right v -> Effect.Class.liftEffect $ Effect.Console.log $ "{\"result\":\"Right\",\"value\":\"" <> sanitize v <> "\"}"
@@ -597,23 +598,23 @@ runApplicativeLaw which = Effect.Aff.launchAff_ do
       let
         program :: Control.Monad.Program.Program () Int
         program = (pure identity) <*> (pure 7)
-      result <- Control.Monad.Program.runParallel Control.Monad.Program.impossibleVariant program
+      result <- Control.Monad.Program.Aff.runParallel Control.Monad.Program.Aff.impossibleVariant program
       if result == 7 then Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":true}" else Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":false}"
 
     "homomorphism" -> do
       let f = (_ + 1)
       let x = 41
       let lhs = pure f <*> pure x :: Control.Monad.Program.Program () Int
-      l <- Control.Monad.Program.runParallel Control.Monad.Program.impossibleVariant lhs
+      l <- Control.Monad.Program.Aff.runParallel Control.Monad.Program.Aff.impossibleVariant lhs
       let rhs = pure (f x) :: Control.Monad.Program.Program () Int
-      r <- Control.Monad.Program.runParallel Control.Monad.Program.impossibleVariant rhs
+      r <- Control.Monad.Program.Aff.runParallel Control.Monad.Program.Aff.impossibleVariant rhs
       if l == r then Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":true}" else Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":false}"
 
     "interchange" -> do
       let y = 5
       let u = pure (_ * 2) :: Control.Monad.Program.Program () (Int -> Int)
-      l <- Control.Monad.Program.runParallel Control.Monad.Program.impossibleVariant (u <*> pure y)
-      r <- Control.Monad.Program.runParallel Control.Monad.Program.impossibleVariant (pure (_ $ y) <*> u)
+      l <- Control.Monad.Program.Aff.runParallel Control.Monad.Program.Aff.impossibleVariant (u <*> pure y)
+      r <- Control.Monad.Program.Aff.runParallel Control.Monad.Program.Aff.impossibleVariant (pure (_ $ y) <*> u)
       if l == r then Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":true}" else Effect.Class.liftEffect $ Effect.Console.log "{\"ok\":false}"
 
     "batch-merge" -> do
@@ -624,7 +625,7 @@ runApplicativeLaw which = Effect.Aff.launchAff_ do
           <*> delay (Data.Time.Duration.Milliseconds 200.0)
           <*> delay (Data.Time.Duration.Milliseconds 200.0)
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on _delay handleDelay Control.Monad.Program.impossibleVariant v) p
+      _ <- Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on _delay handleDelay Control.Monad.Program.Aff.impossibleVariant v) p
       end <- Effect.Class.liftEffect Effect.Now.now
       let
         Data.Time.Duration.Milliseconds a = Data.DateTime.Instant.unInstant start

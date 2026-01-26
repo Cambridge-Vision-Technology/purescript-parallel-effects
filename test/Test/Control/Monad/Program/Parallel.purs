@@ -3,6 +3,7 @@ module Test.Control.Monad.Program.Parallel where
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Control.Monad.Program.Parallel as Control.Monad.Program.Parallel
 import Data.Array as Data.Array
 import Data.DateTime.Instant as Data.DateTime.Instant
@@ -24,8 +25,8 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      Data.Tuple.Tuple _ _ <- Control.Monad.Program.runParallel
-        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
+      Data.Tuple.Tuple _ _ <- Control.Monad.Program.Aff.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.Aff.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -43,7 +44,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (pure "first")
           (pure "second")
 
-      Data.Tuple.Tuple first second <- Control.Monad.Program.runPure program
+      Data.Tuple.Tuple first second <- Control.Monad.Program.Aff.runPure program
 
       first `Test.Spec.Assertions.shouldEqual` "first"
       second `Test.Spec.Assertions.shouldEqual` "second"
@@ -57,8 +58,8 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (Test.Support.Delay.delay (Data.Time.Duration.Milliseconds 200.0))
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      Data.Tuple.Tuple _ (Data.Tuple.Tuple _ _) <- Control.Monad.Program.runParallel
-        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
+      Data.Tuple.Tuple _ (Data.Tuple.Tuple _ _) <- Control.Monad.Program.Aff.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.Aff.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -77,7 +78,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (pure "second")
           (pure "third")
 
-      Data.Tuple.Tuple first (Data.Tuple.Tuple second third) <- Control.Monad.Program.runPure program
+      Data.Tuple.Tuple first (Data.Tuple.Tuple second third) <- Control.Monad.Program.Aff.runPure program
 
       first `Test.Spec.Assertions.shouldEqual` "first"
       second `Test.Spec.Assertions.shouldEqual` "second"
@@ -88,7 +89,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
       let
         program = Control.Monad.Program.Parallel.gather []
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` ([] :: Array Unit)
 
@@ -96,7 +97,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
       let
         program = Control.Monad.Program.Parallel.gather [ pure "only" ]
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ "only" ]
 
@@ -111,8 +112,8 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
         program = Control.Monad.Program.Parallel.gather delays
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.Program.runParallel
-        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
+      _ <- Control.Monad.Program.Aff.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.Aff.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -133,7 +134,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           , pure 4
           ]
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ 1, 2, 3, 4 ]
 
@@ -142,7 +143,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
       let
         program = Control.Monad.Program.Parallel.parTraverse pure ([] :: Array Int)
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` []
 
@@ -154,8 +155,8 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           [ 1, 2, 3 ]
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.Program.runParallel
-        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
+      _ <- Control.Monad.Program.Aff.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.Aff.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -173,7 +174,7 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (\n -> pure (n * 2))
           [ 1, 2, 3, 4 ]
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` [ 2, 4, 6, 8 ]
 
@@ -185,8 +186,8 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           [ 1, 2, 3 ]
 
       start <- Effect.Class.liftEffect Effect.Now.now
-      _ <- Control.Monad.Program.runParallel
-        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.impossibleVariant v)
+      _ <- Control.Monad.Program.Aff.runParallel
+        (\v -> Control.Monad.Program.on Test.Support.Delay._delay Test.Support.Delay.handleDelay Control.Monad.Program.Aff.impossibleVariant v)
         program
       end <- Effect.Class.liftEffect Effect.Now.now
 
@@ -204,6 +205,6 @@ spec = Test.Spec.describe "Control.Monad.Program.Parallel" do
           (\n -> pure (n * 2))
           [ 1, 2, 3 ]
 
-      result <- Control.Monad.Program.runPure program
+      result <- Control.Monad.Program.Aff.runPure program
 
       result `Test.Spec.Assertions.shouldEqual` unit

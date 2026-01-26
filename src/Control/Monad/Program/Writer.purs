@@ -11,6 +11,7 @@ module Control.Monad.Program.Writer
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol as Data.Symbol
 import Data.Tuple as Data.Tuple
@@ -51,7 +52,7 @@ runWriterAt
   -> Effect.Aff.Aff (Data.Tuple.Tuple w a)
 runWriterAt sym handler prog = do
   ref <- Effect.Class.liftEffect $ Effect.Ref.new mempty
-  result <- Control.Monad.Program.runParallel (handlers ref) prog
+  result <- Control.Monad.Program.Aff.runParallel (handlers ref) prog
   log <- Effect.Class.liftEffect $ Effect.Ref.read ref
   pure $ Data.Tuple.Tuple log result
   where

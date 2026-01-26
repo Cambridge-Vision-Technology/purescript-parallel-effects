@@ -10,6 +10,7 @@ module Control.Monad.Program.SafeEffect
 import Prelude
 
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
 import Data.Symbol (class IsSymbol)
@@ -56,7 +57,7 @@ runSafeEffect
   :: forall a
    . Control.Monad.Program.Program (SAFE_EFFECT ()) a
   -> Effect.Aff.Aff a
-runSafeEffect = runSafeEffectAt _safeEffect Control.Monad.Program.impossibleVariant
+runSafeEffect = runSafeEffectAt _safeEffect Control.Monad.Program.Aff.impossibleVariant
 
 -- | Handle SAFE_EFFECT effects at a specific label
 -- | Executes the wrapped Effect with Effect.Exception.try to catch errors
@@ -69,7 +70,7 @@ runSafeEffectAt
   -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runSafeEffectAt sym handler prog =
-  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleSafeEffect handler v) prog
+  Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on sym handleSafeEffect handler v) prog
   where
   handleSafeEffect :: SafeEffectF ~> Effect.Aff.Aff
   handleSafeEffect (SafeEffectF eff) = Effect.Class.liftEffect eff

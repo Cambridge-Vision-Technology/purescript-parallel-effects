@@ -14,6 +14,7 @@ import Prelude
 
 import Control.Applicative.Free as Control.Applicative.Free
 import Control.Monad.Program as Control.Monad.Program
+import Control.Monad.Program.Aff as Control.Monad.Program.Aff
 import Control.Parallel as Control.Parallel
 import Data.Either as Data.Either
 import Data.Functor.Variant as Data.Functor.Variant
@@ -57,7 +58,7 @@ fileExists path = Control.Monad.Program.lift _filesystem (FileExists path identi
 
 -- | Handle FILE_SYSTEM effects for programs with only FILE_SYSTEM (no other effects)
 runFileSystem :: forall a. Control.Monad.Program.Program (FILE_SYSTEM ()) a -> Effect.Aff.Aff a
-runFileSystem = runFileSystemAt _filesystem Control.Monad.Program.impossibleVariant
+runFileSystem = runFileSystemAt _filesystem Control.Monad.Program.Aff.impossibleVariant
 
 -- | Handle FILE_SYSTEM effects at a specific label
 runFileSystemAt
@@ -69,7 +70,7 @@ runFileSystemAt
   -> Control.Monad.Program.Program r a
   -> Effect.Aff.Aff a
 runFileSystemAt sym handler prog =
-  Control.Monad.Program.runParallel (\v -> Control.Monad.Program.on sym handleFileSystem handler v) prog
+  Control.Monad.Program.Aff.runParallel (\v -> Control.Monad.Program.on sym handleFileSystem handler v) prog
   where
   handleFileSystem :: FileSystemF ~> Effect.Aff.Aff
   handleFileSystem (ReadFile path cont) = do
