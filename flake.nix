@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     ps-tools.follows = "purs-nix/ps-tools";
-    purs-nix.url = "https://flakehub.com/f/Cambridge-Vision-Technology/purs-nix/0.1.tar.gz";
+    purs-nix.url = "git+ssh://git@github.com/Cambridge-Vision-Technology/purs-nix?rev=12a7bcf1b002ac080c3187eec641332d64b5c2c7";
     purs-nix.inputs.nixpkgs.follows = "nixpkgs";
     utils.url = "github:numtide/flake-utils";
     treefmt-nix.url = "github:numtide/treefmt-nix";
@@ -104,6 +104,22 @@
           dir = ./.;
         };
 
+        programCoreSource = pkgs.lib.fileset.toSource {
+          root = ./.;
+          fileset = ./src/Control/Monad/Program/Core.purs;
+        };
+        programCore = purs-nix.purs {
+          srcs = [ "${programCoreSource}/src" ];
+          dependencies = [
+            "prelude"
+            "free"
+            "freeap"
+            "variant"
+            "newtype"
+            "tailrec"
+          ];
+        };
+
         # Source files for linting/formatting
         purescriptSources = pkgs.lib.fileset.unions [
           (pkgs.lib.fileset.fileFilter (file: file.hasExt "purs") ./src)
@@ -112,6 +128,8 @@
       in
       {
         packages = {
+          program-core-source = programCoreSource;
+          program-core-node = programCore.output { };
           default = ps.bundle { };
 
           # Linting
@@ -366,6 +384,7 @@
         };
 
         checks = {
+          build-program-core = programCore.output { };
           lint = self.packages.${system}.lint;
           formatting = treefmtEval.config.build.check self;
           build = ps.bundle { };
